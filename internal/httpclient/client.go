@@ -42,9 +42,19 @@ func (c *Client) SetHeader(key, value string) {
 	c.Headers.Set(key, value)
 }
 
-func (c *Client) Execute(method string, url string) *Result {
+func (c *Client) Execute(method string, url string, body []byte) *Result {
 	start := time.Now()
-	req, err := http.NewRequest(method, url, nil)
+
+	var requestBody io.Reader
+
+	if body != nil {
+		requestBody = strings.NewReader(string(body))
+	}
+
+	req, err := http.NewRequest(method, url, requestBody)
+	c.SetHeader("Content-Type", "application/json")
+	req.Header = c.Headers
+
 	if err != nil {
 		fmt.Println("request error:", err)
 		return nil
@@ -59,7 +69,7 @@ func (c *Client) Execute(method string, url string) *Result {
 	}
 	defer res.Body.Close()
 
-	body, _ := io.ReadAll(res.Body)
+	ResponseBody, _ := io.ReadAll(res.Body)
 
 	result := Result{
 		Request: Request{
@@ -68,7 +78,7 @@ func (c *Client) Execute(method string, url string) *Result {
 			Header: req.Header,
 		},
 		Response: Response{
-			Body:          body,
+			Body:          ResponseBody,
 			StatusCode:    res.StatusCode,
 			ExecutionTime: time.Since(start).Milliseconds(),
 			Header:        res.Header,

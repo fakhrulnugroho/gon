@@ -7,24 +7,26 @@ import (
 	"gon/internal/httpclient"
 )
 
-type GetCommand struct{}
+type PostCommand struct{}
 
-func (c GetCommand) Name() string {
-	return "get"
+func (c PostCommand) Name() string {
+	return "post"
 }
 
-func (c GetCommand) Group() string {
+func (c PostCommand) Group() string {
 	return "http"
 }
 
-func (c GetCommand) Description() string {
+func (c PostCommand) Description() string {
 	return "Send an HTTP GET request"
 }
 
-func (c GetCommand) Execute(args []string) {
+func (c PostCommand) Execute(args []string) {
 	var client = httpclient.NewClient()
-	fs := flag.NewFlagSet("get", flag.ExitOnError)
+	fs := flag.NewFlagSet("post", flag.ExitOnError)
 	minimal := fs.Bool("minimal", false, "test")
+	body := fs.String("body", "", "request body")
+
 	fs.Parse(args[1:])
 
 	outputMode := "normal"
@@ -34,10 +36,11 @@ func (c GetCommand) Execute(args []string) {
 	}
 
 	if len(args) == 0 {
-		fmt.Println("usage example: get <url>")
+		fmt.Println("usage example: post <url>")
 		return
 	}
-	response := client.Execute("GET", args[0], nil)
+
+	response := client.Execute("POST", args[0], []byte(*body))
 
 	if response == nil {
 		fmt.Println("error")

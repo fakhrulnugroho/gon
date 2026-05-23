@@ -23,4 +23,5 @@ func Init() {
 	Register(ClearCommand{})
 	Register(ExitCommand{})
 	Register(GetCommand{})
+	Register(PostCommand{})
 }
