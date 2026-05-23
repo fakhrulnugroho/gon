@@ -8,6 +8,8 @@ import (
 
 type GetCommand struct{}
 
+var client = httpclient.NewClient()
+
 func (c GetCommand) Name() string {
 	return "get"
 }
@@ -25,10 +27,11 @@ func (c GetCommand) Execute(args []string) {
 		fmt.Println("usage example: get <url>")
 		return
 	}
-	response := httpclient.Execute("GET", args[0])
+	response := client.Execute("GET", args[0])
+
 	if response == nil {
 		fmt.Println("error")
 		return
 	}
-	formatter.HttpCall(response, "minimal")
+	formatter.HttpCall(&response.Response, "minimal")
 }

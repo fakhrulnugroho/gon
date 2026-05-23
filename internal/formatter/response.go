@@ -45,6 +45,6 @@ func HttpCall(response *httpclient.Response, output string) {
 	fmt.Print("\n")
 	fmt.Println(renderHttpStatus(response.StatusCode), fmt.Sprintf("(%s)", renderExecutionTime(response.ExecutionTime)))
 	fmt.Print("\n")
-	fmt.Println(PrettyJSON(response.BodyBytes))
+	fmt.Println(PrettyJSON(response.Body))
 	fmt.Print("\n\n")
 }
