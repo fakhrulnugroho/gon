@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"gon/internal/formatter"
 	"gon/internal/httpclient"
+	"net/http"
+	"strings"
 )
 
 type GetCommand struct{}
 
 func (c GetCommand) Name() string {
-	return "get"
+	return strings.ToLower(http.MethodGet)
 }
 
 func (c GetCommand) Group() string {
@@ -26,10 +28,16 @@ func (c GetCommand) Execute(args []string) {
 		fmt.Println("usage example: get <url>")
 		return
 	}
-	fs := flag.NewFlagSet("get", flag.ExitOnError)
+	fs := flag.NewFlagSet(http.MethodGet, flag.ExitOnError)
 	outputMode := parseOutputMode(fs, args[1:])
 	client := httpclient.NewClient()
-	response := client.Execute("GET", args[0], nil)
+
+	request := httpclient.NewRequestBuilder()
+
+	request.Method(http.MethodGet)
+	request.URL(args[0])
+
+	response := client.Execute(request)
 	if response == nil {
 		fmt.Println("error")
 		return

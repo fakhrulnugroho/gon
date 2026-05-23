@@ -31,34 +31,32 @@ type Result struct {
 	Error    error
 }
 
-type Client struct {
-	Headers http.Header
-}
+type Client struct{}
 
 func NewClient() *Client {
-	return &Client{Headers: http.Header{}}
+	return &Client{}
 }
 
-func (c *Client) SetHeader(key, value string) {
-	c.Headers.Set(key, value)
-}
-
-func (c *Client) Execute(method string, url string, body []byte) *Result {
+func (c *Client) Execute(request *RequestBuilder) *Result {
 	start := time.Now()
 
 	var requestBody io.Reader
 
-	if body != nil {
-		requestBody = bytes.NewReader(body)
-		c.SetHeader("Content-Type", "application/json")
+	if request.body != nil {
+		requestBody = bytes.NewReader(request.body)
 	}
 
-	req, err := http.NewRequest(method, url, requestBody)
+	req, err := http.NewRequest(request.method, request.url, requestBody)
+
+	if request.headers != nil {
+		for key, value := range request.headers {
+			req.Header.Add(key, value)
+		}
+	}
 	if err != nil {
 		fmt.Println("request error:", err)
 		return nil
 	}
-	req.Header = c.Headers
 
 	client := &http.Client{}
 
@@ -73,8 +71,8 @@ func (c *Client) Execute(method string, url string, body []byte) *Result {
 
 	result := Result{
 		Request: Request{
-			Method: strings.ToUpper(method),
-			URL:    url,
+			Method: strings.ToUpper(request.method),
+			URL:    request.url,
 			Header: req.Header,
 		},
 		Response: Response{

@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"gon/internal/formatter"
 	"gon/internal/httpclient"
+	"net/http"
+	"strings"
 )
 
 type PostCommand struct{}
 
 func (c PostCommand) Name() string {
-	return "post"
+	return strings.ToLower(http.MethodPost)
 }
 
 func (c PostCommand) Group() string {
@@ -23,7 +25,7 @@ func (c PostCommand) Description() string {
 
 func (c PostCommand) Execute(args []string) {
 	var client = httpclient.NewClient()
-	fs := flag.NewFlagSet("post", flag.ExitOnError)
+	fs := flag.NewFlagSet(http.MethodPost, flag.ExitOnError)
 	body := fs.String("body", "", "request body")
 	outputMode := parseOutputMode(fs, args[1:])
 	fs.Parse(args[1:])
@@ -33,7 +35,14 @@ func (c PostCommand) Execute(args []string) {
 		return
 	}
 
-	response := client.Execute("POST", args[0], []byte(*body))
+	request := httpclient.NewRequestBuilder()
+
+	request.Method(http.MethodPost)
+	request.URL(args[0])
+	request.Body([]byte(*body))
+	request.Headers(map[string]string{"Content-Type": "application/json"})
+
+	response := client.Execute(request.Build())
 
 	if response == nil {
 		fmt.Println("error")
