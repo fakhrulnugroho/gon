@@ -1,6 +1,7 @@
 package command
 
 import (
+	"flag"
 	"fmt"
 	"gon/internal/formatter"
 	"gon/internal/httpclient"
@@ -23,6 +24,18 @@ func (c GetCommand) Description() string {
 }
 
 func (c GetCommand) Execute(args []string) {
+	fs := flag.NewFlagSet("get", flag.ExitOnError)
+
+	fs.Parse(args)
+
+	outputMode := "normal"
+
+	for _, arg := range args {
+		if arg == "--minimal" {
+			outputMode = "minimal"
+		}
+	}
+
 	if len(args) == 0 {
 		fmt.Println("usage example: get <url>")
 		return
@@ -33,5 +46,5 @@ func (c GetCommand) Execute(args []string) {
 		fmt.Println("error")
 		return
 	}
-	formatter.HttpCall(&response.Response, "minimal")
+	formatter.HttpCall(response, outputMode)
 }

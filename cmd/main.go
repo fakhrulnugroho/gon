@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"gon/internal/color"
 	"gon/internal/command"
+	"os"
 	"strings"
 
 	"github.com/chzyer/readline"
 )
 
-func main() {
+func interactive() {
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt:          color.Info("gon> "),
 		HistoryFile:     "/tmp/gon.history",
@@ -39,9 +40,20 @@ func main() {
 			continue
 		}
 
-		command.Init()
 		handleInput(input)
 	}
+}
+
+func main() {
+	command.Init()
+	args := os.Args
+
+	if len(args) > 1 {
+		handleInput(strings.Join(args[1:], " "))
+	} else {
+		interactive()
+	}
+
 }
 
 func handleInput(input string) {

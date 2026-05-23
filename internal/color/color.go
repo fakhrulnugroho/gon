@@ -17,6 +17,10 @@ func color(hex string, text string) string {
 	)
 }
 
+func Secondary(text string) string {
+	return color("#d8dee9", text)
+}
+
 func Success(text string) string {
 	return color("#A3BE8C", text)
 }

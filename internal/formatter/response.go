@@ -41,10 +41,20 @@ func renderExecutionTime(executionTime int64) string {
 	}
 }
 
-func HttpCall(response *httpclient.Response, output string) {
+func HttpCall(result *httpclient.Result, output string) {
+	response := result.Response
+
 	fmt.Print("\n")
 	fmt.Println(renderHttpStatus(response.StatusCode), fmt.Sprintf("(%s)", renderExecutionTime(response.ExecutionTime)))
+	if output == "normal" {
+		fmt.Print("\n")
+		for header, values := range response.Header {
+			for _, value := range values {
+				fmt.Println(color.Info(header+":"), color.Secondary(value))
+			}
+		}
+	}
 	fmt.Print("\n")
 	fmt.Println(PrettyJSON(response.Body))
-	fmt.Print("\n\n")
+	fmt.Print("\n")
 }
