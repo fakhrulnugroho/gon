@@ -1,11 +1,14 @@
 package command
 
 var commands = map[string]Command{
-	"help":  HelpCommand{},
-	"clear": ClearCommand{},
-	"exit":  ExitCommand{},
-	"get":   GetCommand{},
-	"post":  PostCommand{},
+	"help":   HelpCommand{},
+	"clear":  ClearCommand{},
+	"exit":   ExitCommand{},
+	"get":    GetCommand{},
+	"post":   PostCommand{},
+	"patch":  PatchCommand{},
+	"put":    PutCommand{},
+	"delete": DeleteCommand{},
 }
 
 type Command interface {
