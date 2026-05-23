@@ -1,7 +1,6 @@
 package command
 
 import (
-	"flag"
 	"fmt"
 	"gon/internal/formatter"
 	"gon/internal/httpclient"
@@ -24,23 +23,21 @@ func (c PutCommand) Description() string {
 }
 
 func (c PutCommand) Execute(args []string) {
-	var client = httpclient.NewClient()
-	fs := flag.NewFlagSet(http.MethodPut, flag.ExitOnError)
-	body := fs.String("body", "", "request body")
-	outputMode := parseOutputMode(fs, args[1:])
-	fs.Parse(args[1:])
-
 	if len(args) == 0 {
 		fmt.Println("usage example: put <url>")
 		return
 	}
 
-	request := httpclient.NewRequestBuilder()
+	client := httpclient.NewClient()
+	request, err := Parse(args[1:])
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	request.Method(http.MethodPut)
 	request.URL(args[0])
-	request.Body([]byte(*body))
-	request.Headers(map[string]string{"Content-Type": "application/json"})
 
 	response := client.Execute(request.Build())
 
@@ -48,5 +45,5 @@ func (c PutCommand) Execute(args []string) {
 		fmt.Println("error")
 		return
 	}
-	formatter.Formatter[outputMode].Format(response)
+	formatter.Formatter["minimal"].Format(response)
 }

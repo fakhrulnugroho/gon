@@ -1,7 +1,6 @@
 package command
 
 import (
-	"flag"
 	"fmt"
 	"gon/internal/formatter"
 	"gon/internal/httpclient"
@@ -28,20 +27,22 @@ func (c GetCommand) Execute(args []string) {
 		fmt.Println("usage example: get <url>")
 		return
 	}
-	fs := flag.NewFlagSet(http.MethodGet, flag.ExitOnError)
-	outputMode := parseOutputMode(fs, args[1:])
-	client := httpclient.NewClient()
 
-	request := httpclient.NewRequestBuilder()
+	client := httpclient.NewClient()
+	request, err := Parse(args[1:])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	request.Method(http.MethodGet)
 	request.URL(args[0])
 
-	response := client.Execute(request)
+	response := client.Execute(request.Build())
+
 	if response == nil {
 		fmt.Println("error")
 		return
 	}
-
-	formatter.Formatter[outputMode].Format(response)
+	formatter.Formatter["minimal"].Format(response)
 }

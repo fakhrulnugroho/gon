@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"gon/internal/color"
+	"gon/internal/httpclient"
+	"gon/internal/option"
 	"gon/internal/version"
 	"os"
 	"strings"
@@ -117,4 +119,40 @@ func parseOutputMode(fs *flag.FlagSet, flagArgs []string) string {
 		return "minimal"
 	}
 	return "normal"
+}
+
+func Parse(args []string) (*httpclient.RequestBuilder, error) {
+	rb := httpclient.NewRequestBuilder()
+
+	i := 0
+
+	for i < len(args) {
+
+		token := args[i]
+
+		option, exists := option.Registry[token]
+
+		if !exists {
+			return nil, fmt.Errorf("unknown option: %s", token)
+		}
+
+		argCount := option.ArgCount()
+
+		start := i + 1
+		end := start + argCount
+
+		if end > len(args) {
+			return nil, fmt.Errorf("not enough args for %s", token)
+		}
+
+		err := option.Apply(rb, args[start:end])
+
+		if err != nil {
+			return nil, err
+		}
+
+		i = end
+	}
+
+	return rb, nil
 }
