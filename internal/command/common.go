@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"gon/internal/color"
+	"gon/internal/version"
 	"os"
 	"strings"
 )
@@ -11,6 +12,23 @@ import (
 type HelpCommand struct{}
 type ExitCommand struct{}
 type ClearCommand struct{}
+type VersionCommand struct{}
+
+func (c VersionCommand) Name() string {
+	return "version"
+}
+
+func (c VersionCommand) Group() string {
+	return "common"
+}
+
+func (c VersionCommand) Description() string {
+	return "Print the version"
+}
+
+func (c VersionCommand) Execute(args []string) {
+	fmt.Printf("gon %s (%s/%s)\n", version.Version, version.OS, version.Arch)
+}
 
 func (c HelpCommand) Name() string {
 	return "help"
