@@ -24,16 +24,9 @@ func (c PostCommand) Description() string {
 func (c PostCommand) Execute(args []string) {
 	var client = httpclient.NewClient()
 	fs := flag.NewFlagSet("post", flag.ExitOnError)
-	minimal := fs.Bool("minimal", false, "test")
 	body := fs.String("body", "", "request body")
-
+	outputMode := parseOutputMode(fs, args[1:])
 	fs.Parse(args[1:])
-
-	outputMode := "normal"
-
-	if *minimal {
-		outputMode = "minimal"
-	}
 
 	if len(args) == 0 {
 		fmt.Println("usage example: post <url>")
@@ -46,5 +39,5 @@ func (c PostCommand) Execute(args []string) {
 		fmt.Println("error")
 		return
 	}
-	formatter.HttpCall(response, outputMode)
+	formatter.Formatter[outputMode].Format(response)
 }

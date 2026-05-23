@@ -67,8 +67,7 @@ func (c ClearCommand) Execute(args []string) {
 	fmt.Print("\033[H\033[2J")
 }
 
-func parseOutputMode(cmdName string, flagArgs []string) string {
-	fs := flag.NewFlagSet(cmdName, flag.ContinueOnError)
+func parseOutputMode(fs *flag.FlagSet, flagArgs []string) string {
 	minimal := fs.Bool("minimal", false, "show minimal output")
 	fs.Parse(flagArgs)
 	if *minimal {

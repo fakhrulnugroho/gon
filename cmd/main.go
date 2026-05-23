@@ -45,7 +45,6 @@ func interactive() {
 }
 
 func main() {
-	command.Init()
 	args := os.Args
 
 	if len(args) > 1 {

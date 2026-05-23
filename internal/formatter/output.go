@@ -8,6 +8,19 @@ import (
 	"strings"
 )
 
+type OutputFormatter interface {
+	Mode() string
+	Format(data *httpclient.Result)
+}
+
+var Formatter = map[string]OutputFormatter{
+	"minimal": NewMinimalFormatter(),
+	"normal":  NewNormalFormatter(),
+}
+
+type MinimalFormatter struct{}
+type NormalFormatter struct{}
+
 func renderHttpStatus(statusCode int) string {
 	text := fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode))
 	switch {
@@ -42,20 +55,50 @@ func renderExecutionTime(executionTime int64) string {
 	}
 }
 
-func HttpCall(result *httpclient.Result, output string) {
+func printBasicHeader(result *httpclient.Result) {
 	response := result.Response
 
 	fmt.Print("\n")
 	fmt.Println(renderHttpStatus(response.StatusCode), fmt.Sprintf("(%s)", renderExecutionTime(response.ExecutionTime)))
-	if output == "normal" {
-		fmt.Print("\n")
-		for header, values := range response.Header {
-			for _, value := range values {
-				fmt.Println(color.Info(header+":"), color.Secondary(value))
-			}
-		}
-	}
+}
+
+func printBasicFooter(result *httpclient.Result) {
+	response := result.Response
+
 	fmt.Print("\n")
 	fmt.Println(PrettyJSON(response.Body))
 	fmt.Print("\n")
+}
+
+func NewMinimalFormatter() *MinimalFormatter {
+	return &MinimalFormatter{}
+}
+
+func (m *MinimalFormatter) Format(data *httpclient.Result) {
+	printBasicHeader(data)
+	printBasicFooter(data)
+}
+
+func (m *MinimalFormatter) Mode() string {
+	return "minimal"
+}
+
+func NewNormalFormatter() *NormalFormatter {
+	return &NormalFormatter{}
+}
+
+func (n *NormalFormatter) Format(data *httpclient.Result) {
+	var response = data.Response
+	printBasicHeader(data)
+	fmt.Print("\n")
+	for header, values := range response.Header {
+		for _, value := range values {
+			fmt.Println(color.Info(header+":"), color.Secondary(value))
+		}
+	}
+	printBasicFooter(data)
+}
+
+func (n *NormalFormatter) Mode() string {
+	return "normal"
 }
