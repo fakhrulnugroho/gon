@@ -4,15 +4,18 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Response struct {
-	Body       string
-	BodyBytes  []byte
-	StatusCode int
+	Body          string
+	BodyBytes     []byte
+	StatusCode    int
+	ExecutionTime int64
 }
 
 func Execute(method string, url string) *Response {
+	start := time.Now()
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		fmt.Println("request error:", err)
@@ -30,9 +33,9 @@ func Execute(method string, url string) *Response {
 
 	body, _ := io.ReadAll(res.Body)
 	return &Response{
-		Body:       string(body),
-		BodyBytes:  body,
-		StatusCode: res.StatusCode,
+		Body:          string(body),
+		BodyBytes:     body,
+		StatusCode:    res.StatusCode,
+		ExecutionTime: time.Since(start).Milliseconds(),
 	}
-
 }
