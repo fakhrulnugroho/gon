@@ -25,12 +25,37 @@ func (c HelpCommand) Description() string {
 }
 
 func (c HelpCommand) Execute(args []string) {
-	fmt.Println("Available commands:")
+	grouped := make(map[string][]Command)
+	groupOrder := []string{}
+
 	for _, cmd := range commands {
-		fmt.Println("  " + color.Info(strings.ToLower(cmd.Name())))
-		if desc := cmd.Description(); desc != "" {
-			fmt.Println("     " + desc)
+		g := cmd.Group()
+		if _, seen := grouped[g]; !seen {
+			groupOrder = append(groupOrder, g)
 		}
+		grouped[g] = append(grouped[g], cmd)
+	}
+
+	// fixed order: common first, then the rest alphabetically
+	ordered := []string{"common"}
+	for _, g := range groupOrder {
+		if g != "common" {
+			ordered = append(ordered, g)
+		}
+	}
+
+	fmt.Println("Available commands:")
+	fmt.Println()
+	for _, g := range ordered {
+		cmds, ok := grouped[g]
+		if !ok {
+			continue
+		}
+		fmt.Println(color.Info(g + ":"))
+		for _, cmd := range cmds {
+			fmt.Printf("  %-10s %s\n", strings.ToLower(cmd.Name()), cmd.Description())
+		}
+		fmt.Println()
 	}
 }
 
