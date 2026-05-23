@@ -16,6 +16,10 @@ func (c GetCommand) Group() string {
 	return "http"
 }
 
+func (c GetCommand) Description() string {
+	return "Send an HTTP GET request"
+}
+
 func (c GetCommand) Execute(args []string) {
 	if len(args) == 0 {
 		fmt.Println("usage example: get <url>")

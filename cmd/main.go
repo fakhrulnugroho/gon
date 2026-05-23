@@ -23,7 +23,7 @@ func main() {
 
 	defer rl.Close()
 
-	fmt.Println("Welcome to gon")
+	fmt.Println("gon — An interactive HTTP client for terminal lovers")
 	fmt.Println("Type 'help' for available commands")
 
 	for {

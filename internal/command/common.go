@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"gon/internal/color"
 	"os"
 	"strings"
 )
@@ -18,10 +19,17 @@ func (c HelpCommand) Group() string {
 	return "common"
 }
 
+func (c HelpCommand) Description() string {
+	return "Print this help message"
+}
+
 func (c HelpCommand) Execute(args []string) {
 	fmt.Println("Available commands:")
 	for _, cmd := range commands {
-		fmt.Println("- " + strings.ToLower(cmd.Name()))
+		fmt.Println("  " + color.Info(strings.ToLower(cmd.Name())))
+		if desc := cmd.Description(); desc != "" {
+			fmt.Println("     " + desc)
+		}
 	}
 }
 
@@ -31,6 +39,10 @@ func (c ExitCommand) Name() string {
 
 func (c ExitCommand) Group() string {
 	return "common"
+}
+
+func (c ExitCommand) Description() string {
+	return "Exit the application"
 }
 
 func (c ExitCommand) Execute(args []string) {
@@ -44,6 +56,10 @@ func (c ClearCommand) Name() string {
 
 func (c ClearCommand) Group() string {
 	return "common"
+}
+
+func (c ClearCommand) Description() string {
+	return "Clear the terminal screen"
 }
 
 func (c ClearCommand) Execute(args []string) {

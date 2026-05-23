@@ -5,6 +5,7 @@ var commands = map[string]Command{}
 type Command interface {
 	Name() string
 	Group() string
+	Description() string
 	Execute(args []string)
 }
 
