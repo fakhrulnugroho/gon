@@ -1,6 +1,7 @@
 package command
 
 import (
+	"flag"
 	"fmt"
 	"gon/internal/color"
 	"os"
@@ -64,4 +65,14 @@ func (c ClearCommand) Description() string {
 
 func (c ClearCommand) Execute(args []string) {
 	fmt.Print("\033[H\033[2J")
+}
+
+func parseOutputMode(cmdName string, flagArgs []string) string {
+	fs := flag.NewFlagSet(cmdName, flag.ContinueOnError)
+	minimal := fs.Bool("minimal", false, "show minimal output")
+	fs.Parse(flagArgs)
+	if *minimal {
+		return "minimal"
+	}
+	return "normal"
 }

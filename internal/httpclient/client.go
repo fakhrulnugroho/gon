@@ -1,6 +1,7 @@
 package httpclient
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -48,17 +49,16 @@ func (c *Client) Execute(method string, url string, body []byte) *Result {
 	var requestBody io.Reader
 
 	if body != nil {
-		requestBody = strings.NewReader(string(body))
+		requestBody = bytes.NewReader(body)
+		c.SetHeader("Content-Type", "application/json")
 	}
 
 	req, err := http.NewRequest(method, url, requestBody)
-	c.SetHeader("Content-Type", "application/json")
-	req.Header = c.Headers
-
 	if err != nil {
 		fmt.Println("request error:", err)
 		return nil
 	}
+	req.Header = c.Headers
 
 	client := &http.Client{}
 
@@ -69,7 +69,7 @@ func (c *Client) Execute(method string, url string, body []byte) *Result {
 	}
 	defer res.Body.Close()
 
-	ResponseBody, _ := io.ReadAll(res.Body)
+	responseBody, _ := io.ReadAll(res.Body)
 
 	result := Result{
 		Request: Request{
@@ -78,7 +78,7 @@ func (c *Client) Execute(method string, url string, body []byte) *Result {
 			Header: req.Header,
 		},
 		Response: Response{
-			Body:          ResponseBody,
+			Body:          responseBody,
 			StatusCode:    res.StatusCode,
 			ExecutionTime: time.Since(start).Milliseconds(),
 			Header:        res.Header,

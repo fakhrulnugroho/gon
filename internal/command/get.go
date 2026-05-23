@@ -1,7 +1,6 @@
 package command
 
 import (
-	"flag"
 	"fmt"
 	"gon/internal/formatter"
 	"gon/internal/httpclient"
@@ -22,23 +21,13 @@ func (c GetCommand) Description() string {
 }
 
 func (c GetCommand) Execute(args []string) {
-	var client = httpclient.NewClient()
-	fs := flag.NewFlagSet("get", flag.ExitOnError)
-	minimal := fs.Bool("minimal", false, "test")
-	fs.Parse(args[1:])
-
-	outputMode := "normal"
-
-	if *minimal {
-		outputMode = "minimal"
-	}
-
 	if len(args) == 0 {
 		fmt.Println("usage example: get <url>")
 		return
 	}
+	outputMode := parseOutputMode("get", args[1:])
+	client := httpclient.NewClient()
 	response := client.Execute("GET", args[0], nil)
-
 	if response == nil {
 		fmt.Println("error")
 		return

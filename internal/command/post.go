@@ -18,7 +18,7 @@ func (c PostCommand) Group() string {
 }
 
 func (c PostCommand) Description() string {
-	return "Send an HTTP GET request"
+	return "Send an HTTP POST request"
 }
 
 func (c PostCommand) Execute(args []string) {

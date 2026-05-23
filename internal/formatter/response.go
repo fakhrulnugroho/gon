@@ -5,19 +5,20 @@ import (
 	"gon/internal/color"
 	"gon/internal/httpclient"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
 func renderHttpStatus(statusCode int) string {
-	if statusCode >= 500 {
-		return (color.Danger(strconv.Itoa(statusCode)) + " " + color.Danger(http.StatusText(statusCode)))
-	} else if statusCode >= 400 {
-		return (color.Warning(strconv.Itoa(statusCode)) + " " + color.Warning(http.StatusText(statusCode)))
-	} else if statusCode >= 300 {
-		return (color.Info(strconv.Itoa(statusCode)) + " " + color.Info(http.StatusText(statusCode)))
-	} else {
-		return (color.Success(strconv.Itoa(statusCode)) + " " + color.Success(http.StatusText(statusCode)))
+	text := fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode))
+	switch {
+	case statusCode >= 500:
+		return color.Danger(text)
+	case statusCode >= 400:
+		return color.Warning(text)
+	case statusCode >= 300:
+		return color.Info(text)
+	default:
+		return color.Success(text)
 	}
 }
 
