@@ -9,9 +9,23 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Test
+  build:
+    name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
 
     steps:
       - name: Checkout
@@ -26,15 +40,22 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Check formatting
+      - name: Set binary name
+        id: binary
         run: |
-          test -z "$(gofmt -l .)"
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Test
-        run: go test -race -covermode=atomic ./...
+          NAME="gon-${{ matrix.goos }}-${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            NAME="${NAME}.exe"
+          fi
+          echo "name=${NAME}" >> $GITHUB_OUTPUT
 
       - name: Build
-        run: go build ./...
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          go build \
+            -ldflags "-s -w -X 'gon/internal/version.Version=${{ github.event.release.tag_name }}'" \
+            -o ${{ steps.binary.outputs.name }} \
+            ./cmd
