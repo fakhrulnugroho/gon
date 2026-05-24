@@ -31,7 +31,11 @@ func (c httpCommand) Execute(args []string) {
 	}
 	request.Method(c.method).URL(args[0])
 	ctx := context.Background()
-	result := client.Execute(ctx, request.Build())
+	result, err := client.Execute(ctx, request.Build())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if result == nil {
 		fmt.Println("error executing request")
 		return

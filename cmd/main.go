@@ -67,9 +67,5 @@ func handleInput(input string) {
 		return
 	}
 
-	if cmd.Group() == "http" {
-		cmd.Execute(parts[1:])
-		return
-	}
 	cmd.Execute(parts[1:])
 }

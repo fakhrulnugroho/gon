@@ -44,7 +44,7 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) Execute(ctx context.Context, request *Request) *Result {
+func (c *Client) Execute(ctx context.Context, request *Request) (*Result, error) {
 	start := time.Now()
 
 	var requestBody io.Reader
@@ -53,23 +53,25 @@ func (c *Client) Execute(ctx context.Context, request *Request) *Result {
 		requestBody = bytes.NewReader(request.Body)
 	}
 
-	req, err := http.NewRequest(request.Method, request.URL, requestBody)
+	req, err := http.NewRequestWithContext(ctx, request.Method, request.URL, requestBody)
 
 	if err != nil {
-		fmt.Println("error request building request :", err)
-		return nil
+		return nil, fmt.Errorf("error building request : %w", err)
 	}
 
 	req.Header = request.Header.Clone()
 
-	res, err := c.http.Do(req.WithContext(ctx))
+	res, err := c.http.Do(req)
 	if err != nil {
-		fmt.Println("response error:", err)
-		return nil
+		return nil, fmt.Errorf("response error: %w", err)
 	}
 	defer res.Body.Close()
 
-	responseBody, _ := io.ReadAll(res.Body)
+	responseBody, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body: %w", err)
+	}
 
 	result := Result{
 		Request: Request{
@@ -87,5 +89,5 @@ func (c *Client) Execute(ctx context.Context, request *Request) *Result {
 		},
 	}
 
-	return &result
+	return &result, nil
 }
