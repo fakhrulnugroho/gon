@@ -16,5 +16,5 @@ func NewVersionService(version string, os string, arch string) driven.VersionSer
 }
 
 func (s *versionService) GetVersion() string {
-	return fmt.Sprintf("gon %s (%s/%s)\n", s.version, s.os, s.arch)
+	return fmt.Sprintf("gon %s (%s/%s)", s.version, s.os, s.arch)
 }

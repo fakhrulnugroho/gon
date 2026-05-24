@@ -64,7 +64,7 @@ func printBasicHeader(result *payload.HttpExecuteOutput) {
 
 func printBasicFooter(response *payload.HttpExecuteOutput) {
 	fmt.Print("\n")
-	fmt.Println(prettyJSON(response.Body))
+	fmt.Print(prettyJSON(response.Body))
 	fmt.Print("\n")
 }
 

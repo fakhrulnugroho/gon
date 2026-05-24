@@ -32,7 +32,7 @@ func cliApp() *cli.Command {
 		common.VersionCommand(versionService),
 	}
 
-	command := &cli.Command{
+	return &cli.Command{
 		Name:  "gon",
 		Usage: "An interactive HTTP client for terminal lovers",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -42,7 +42,6 @@ func cliApp() *cli.Command {
 		},
 		Commands: commands,
 	}
-	return command
 }
 
 func repl() {
@@ -80,6 +79,7 @@ func repl() {
 		if err := cliApp().Run(context.Background(), append([]string{"gon"}, args...)); err != nil {
 			fmt.Println(err)
 		}
+		fmt.Println()
 	}
 }
 
