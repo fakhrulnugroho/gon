@@ -42,7 +42,9 @@ jobs:
       - name: Set binary name
         id: binary
         run: |
-          NAME="gon-${{ matrix.goos }}-${{ matrix.goarch }}"
+          TAG="${{ github.event.release.tag_name }}"
+          [[ "$TAG" != v* ]] && TAG="v${TAG}"
+          NAME="gon-${TAG}-${{ matrix.goos }}-${{ matrix.goarch }}"
           if [ "${{ matrix.goos }}" = "windows" ]; then
             NAME="${NAME}.exe"
           fi
