@@ -1,13 +1,74 @@
-package formatter
+package service
 
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"gon/internal/color"
+	"gon/internal/core/payload"
+	"gon/internal/core/port/driving"
+	"net/http"
 	"strings"
 )
 
-func PrettyJSON(input []byte) string {
+type httpOutput struct {
+}
+
+func NewHttpOutput() driving.HttpOutput {
+	return &httpOutput{}
+}
+
+func (h *httpOutput) Format(input *payload.HttpExecuteInput, output *payload.HttpExecuteOutput) {
+	printBasicHeader(output)
+	printBasicFooter(output)
+}
+
+func renderHttpStatus(statusCode int) string {
+	text := fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode))
+	switch {
+	case statusCode >= 500:
+		return color.Danger(text)
+	case statusCode >= 400:
+		return color.Warning(text)
+	case statusCode >= 300:
+		return color.Info(text)
+	default:
+		return color.Success(text)
+	}
+}
+
+func trimExecutionTime(executionTime int64) string {
+	if executionTime >= 1000 {
+		seconds := float64(executionTime) / 1000
+		return strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.2f", seconds), "0"), ".") + "s"
+	}
+
+	return fmt.Sprintf("%dms", executionTime)
+}
+
+func renderExecutionTime(executionTime int64) string {
+	if executionTime >= 500 {
+		return color.Danger(trimExecutionTime(executionTime))
+	} else if executionTime >= 100 {
+		return color.Warning(trimExecutionTime(executionTime))
+	} else {
+		return color.Success(trimExecutionTime(executionTime))
+
+	}
+}
+
+func printBasicHeader(result *payload.HttpExecuteOutput) {
+	fmt.Print("\n")
+	fmt.Println(renderHttpStatus(result.StatusCode), fmt.Sprintf("(%s)", renderExecutionTime(result.Metadata.ExecutionTime.Milliseconds())))
+}
+
+func printBasicFooter(response *payload.HttpExecuteOutput) {
+	fmt.Print("\n")
+	fmt.Println(prettyJSON(response.Body))
+	fmt.Print("\n")
+}
+
+func prettyJSON(input []byte) string {
 	input = bytes.TrimSpace(input)
 	if len(input) == 0 {
 		return ""

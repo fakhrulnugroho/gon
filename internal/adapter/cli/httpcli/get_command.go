@@ -2,9 +2,9 @@ package httpcli
 
 import (
 	"context"
-	"gon/hexagonal/core/payload"
-	"gon/hexagonal/core/port/driven"
-	"gon/hexagonal/core/port/driving"
+	"gon/internal/core/payload"
+	"gon/internal/core/port/driven"
+	"gon/internal/core/port/driving"
 
 	"github.com/urfave/cli/v3"
 )

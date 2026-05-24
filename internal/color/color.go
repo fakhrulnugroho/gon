@@ -6,7 +6,7 @@ const (
 	Reset = "\033[0m"
 )
 
-func color(hex string, text string) string {
+func formatColor(hex string, text string) string {
 	var r, g, b int
 
 	fmt.Sscanf(hex, "#%02x%02x%02x", &r, &g, &b)
@@ -18,45 +18,45 @@ func color(hex string, text string) string {
 }
 
 func Secondary(text string) string {
-	return color("#d8dee9", text)
+	return formatColor("#d8dee9", text)
 }
 
 func Success(text string) string {
-	return color("#A3BE8C", text)
+	return formatColor("#A3BE8C", text)
 }
 
 func Danger(text string) string {
-	return color("#BF616A", text)
+	return formatColor("#BF616A", text)
 }
 
 func Warning(text string) string {
-	return color("#EBCB8B", text)
+	return formatColor("#EBCB8B", text)
 }
 
 func Info(text string) string {
-	return color("#81A1C1", text)
+	return formatColor("#81A1C1", text)
 }
 
 func JSONKey(text string) string {
-	return color("#88C0D0", text)
+	return formatColor("#88C0D0", text)
 }
 
 func JSONString(text string) string {
-	return color("#A3BE8C", text)
+	return formatColor("#A3BE8C", text)
 }
 
 func JSONNumber(text string) string {
-	return color("#B48EAD", text)
+	return formatColor("#B48EAD", text)
 }
 
 func JSONBool(text string) string {
-	return color("#D08770", text)
+	return formatColor("#D08770", text)
 }
 
 func JSONNull(text string) string {
-	return color("#BF616A", text)
+	return formatColor("#BF616A", text)
 }
 
 func JSONPunctuation(text string) string {
-	return color("#D8DEE9", text)
+	return formatColor("#D8DEE9", text)
 }

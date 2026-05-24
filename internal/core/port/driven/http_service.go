@@ -2,7 +2,7 @@ package driven
 
 import (
 	"context"
-	"gon/hexagonal/core/payload"
+	"gon/internal/core/payload"
 )
 
 type HttpService interface {

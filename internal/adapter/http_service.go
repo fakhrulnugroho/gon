@@ -4,22 +4,24 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"gon/hexagonal/core/payload"
-	"gon/hexagonal/core/port/driven"
+	"gon/internal/core/payload"
+	"gon/internal/core/port/driven"
 	"io"
 	"net/http"
 	"time"
 )
 
-type HttpService struct {
+type httpService struct {
 	httpClient *http.Client
 }
 
 func NewHttpService(httpClient *http.Client) driven.HttpService {
-	return &HttpService{httpClient: httpClient}
+	return &httpService{
+		httpClient: httpClient,
+	}
 }
 
-func (s *HttpService) Execute(ctx context.Context, input *payload.HttpExecuteInput) (*payload.HttpExecuteOutput, error) {
+func (s *httpService) Execute(ctx context.Context, input *payload.HttpExecuteInput) (*payload.HttpExecuteOutput, error) {
 	start := time.Now()
 
 	var requestBody io.Reader

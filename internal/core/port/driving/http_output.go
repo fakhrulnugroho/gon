@@ -1,6 +1,6 @@
 package driving
 
-import "gon/hexagonal/core/payload"
+import "gon/internal/core/payload"
 
 type HttpOutput interface {
 	Format(input *payload.HttpExecuteInput, output *payload.HttpExecuteOutput)

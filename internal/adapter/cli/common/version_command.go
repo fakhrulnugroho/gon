@@ -3,7 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
-	"gon/hexagonal/core/port/driven"
+	"gon/internal/core/port/driven"
 
 	"github.com/urfave/cli/v3"
 )

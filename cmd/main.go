@@ -1,72 +1,46 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"gon/internal/color"
-	"gon/internal/command"
+	"gon/internal/adapter"
+	"gon/internal/adapter/cli/common"
+	"gon/internal/adapter/cli/httpcli"
+	"gon/internal/core/service"
+	"gon/internal/version"
+	"log"
+	"net/http"
 	"os"
-	"strings"
 
-	"github.com/chzyer/readline"
+	"github.com/urfave/cli/v3"
 )
 
-func interactive() {
-	rl, err := readline.NewEx(&readline.Config{
-		Prompt:          color.Info("gon> "),
-		HistoryFile:     "/tmp/gon.history",
-		InterruptPrompt: "^C",
-		EOFPrompt:       "exit",
-	})
-
-	if err != nil {
-		fmt.Println("errors ", err)
-		os.Exit(1)
-	}
-
-	defer rl.Close()
-
-	fmt.Println("gon — An interactive HTTP client for terminal lovers")
-	fmt.Println("Type 'help' for available commands")
-
-	for {
-		line, err := rl.Readline()
-
-		if err != nil {
-			break
-		}
-
-		input := strings.TrimSpace(line)
-
-		if input == "" {
-			continue
-		}
-
-		handleInput(input)
-	}
-}
-
 func main() {
-	args := os.Args
+	httpService := adapter.NewHttpService(&http.Client{})
+	httpOutput := service.NewHttpOutput()
+	versionService := service.NewVersionService(version.Version, version.OS, version.Arch)
 
-	if len(args) > 1 {
-		handleInput(strings.Join(args[1:], " "))
-	} else {
-		interactive()
+	commands := []*cli.Command{
+		httpcli.GetCommand(httpService, httpOutput),
+		httpcli.HttpCommand("post", httpService, httpOutput),
+		httpcli.HttpCommand("put", httpService, httpOutput),
+		httpcli.HttpCommand("delete", httpService, httpOutput),
+		httpcli.HttpCommand("patch", httpService, httpOutput),
+		common.VersionCommand(versionService),
 	}
 
-}
-
-func handleInput(input string) {
-	parts := strings.Fields(input)
-
-	name := parts[0]
-
-	cmd, ok := command.Find(name)
-
-	if !ok {
-		fmt.Println("unknown command")
-		return
+	command := &cli.Command{
+		Name:  "gon",
+		Usage: "An interactive HTTP client for terminal lovers",
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			fmt.Println("gon — An interactive HTTP client for terminal lovers")
+			fmt.Println("Type 'help' for available commands")
+			return nil
+		},
+		Commands: commands,
 	}
 
-	cmd.Execute(parts[1:])
+	if err := command.Run(context.Background(), os.Args); err != nil {
+		log.Fatal(err)
+	}
 }
