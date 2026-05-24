@@ -1,9 +1,11 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"gon/internal/formatter"
 	"gon/internal/httpclient"
+	"gon/internal/option"
 	"strings"
 )
 
@@ -22,16 +24,53 @@ func (c httpCommand) Execute(args []string) {
 		return
 	}
 	client := httpclient.NewClient()
-	request, err := Parse(args[1:])
+	request, err := parse(args[1:])
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	request.Method(c.method).URL(args[0])
-	result := client.Execute(request.Build())
+	ctx := context.Background()
+	result := client.Execute(ctx, request.Build())
 	if result == nil {
 		fmt.Println("error executing request")
 		return
 	}
 	formatter.Formatter["minimal"].Format(result)
+}
+
+func parse(args []string) (*httpclient.RequestBuilder, error) {
+	rb := httpclient.NewRequestBuilder()
+
+	i := 0
+
+	for i < len(args) {
+
+		token := args[i]
+
+		option, exists := option.Registry[token]
+
+		if !exists {
+			return nil, fmt.Errorf("unknown option: %s", token)
+		}
+
+		argCount := option.ArgCount()
+
+		start := i + 1
+		end := start + argCount
+
+		if end > len(args) {
+			return nil, fmt.Errorf("not enough args for %s", token)
+		}
+
+		err := option.Apply(rb, args[start:end])
+
+		if err != nil {
+			return nil, err
+		}
+
+		i = end
+	}
+
+	return rb, nil
 }

@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -31,35 +32,37 @@ type Result struct {
 	Error    error
 }
 
-type Client struct{}
-
-func NewClient() *Client {
-	return &Client{}
+type Client struct {
+	http *http.Client
 }
 
-func (c *Client) Execute(request *RequestBuilder) *Result {
+func NewClient() *Client {
+	return &Client{
+		http: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+	}
+}
+
+func (c *Client) Execute(ctx context.Context, request *Request) *Result {
 	start := time.Now()
 
 	var requestBody io.Reader
 
-	if request.body != nil {
-		requestBody = bytes.NewReader(request.body)
+	if request.Body != nil {
+		requestBody = bytes.NewReader(request.Body)
 	}
 
-	req, err := http.NewRequest(request.method, request.url, requestBody)
+	req, err := http.NewRequest(request.Method, request.URL, requestBody)
 
 	if err != nil {
 		fmt.Println("error request building request :", err)
 		return nil
 	}
 
-	for key, value := range request.headers {
-		req.Header.Add(key, value)
-	}
+	req.Header = request.Header.Clone()
 
-	client := &http.Client{}
-
-	res, err := client.Do(req)
+	res, err := c.http.Do(req.WithContext(ctx))
 	if err != nil {
 		fmt.Println("response error:", err)
 		return nil
@@ -70,8 +73,8 @@ func (c *Client) Execute(request *RequestBuilder) *Result {
 
 	result := Result{
 		Request: Request{
-			Method: strings.ToUpper(request.method),
-			URL:    request.url,
+			Method: strings.ToUpper(request.Method),
+			URL:    request.URL,
 			Header: req.Header,
 		},
 		Response: Response{

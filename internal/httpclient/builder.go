@@ -1,5 +1,9 @@
 package httpclient
 
+import (
+	"net/http"
+)
+
 type RequestBuilder struct {
 	method  string
 	url     string
@@ -38,11 +42,15 @@ func (b *RequestBuilder) Body(body []byte) *RequestBuilder {
 	return b
 }
 
-func (b *RequestBuilder) Build() *RequestBuilder {
-	return &RequestBuilder{
-		method:  b.method,
-		url:     b.url,
-		headers: b.headers,
-		body:    b.body,
+func (b *RequestBuilder) Build() *Request {
+	headers := make(http.Header)
+	for key, value := range b.headers {
+		headers.Set(key, value)
+	}
+	return &Request{
+		Method: b.method,
+		URL:    b.url,
+		Header: headers,
+		Body:   b.body,
 	}
 }

@@ -1,11 +1,8 @@
 package command
 
 import (
-	"flag"
 	"fmt"
 	"gon/internal/color"
-	"gon/internal/httpclient"
-	"gon/internal/option"
 	"gon/internal/version"
 	"os"
 	"strings"
@@ -110,49 +107,4 @@ func (c ClearCommand) Description() string {
 
 func (c ClearCommand) Execute(args []string) {
 	fmt.Print("\033[H\033[2J")
-}
-
-func parseOutputMode(fs *flag.FlagSet, flagArgs []string) string {
-	minimal := fs.Bool("minimal", false, "show minimal output")
-	fs.Parse(flagArgs)
-	if *minimal {
-		return "minimal"
-	}
-	return "normal"
-}
-
-func Parse(args []string) (*httpclient.RequestBuilder, error) {
-	rb := httpclient.NewRequestBuilder()
-
-	i := 0
-
-	for i < len(args) {
-
-		token := args[i]
-
-		option, exists := option.Registry[token]
-
-		if !exists {
-			return nil, fmt.Errorf("unknown option: %s", token)
-		}
-
-		argCount := option.ArgCount()
-
-		start := i + 1
-		end := start + argCount
-
-		if end > len(args) {
-			return nil, fmt.Errorf("not enough args for %s", token)
-		}
-
-		err := option.Apply(rb, args[start:end])
-
-		if err != nil {
-			return nil, err
-		}
-
-		i = end
-	}
-
-	return rb, nil
 }
