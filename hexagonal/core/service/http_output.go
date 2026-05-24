@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gon/hexagonal/color"
 	"gon/hexagonal/core/payload"
+	"gon/hexagonal/core/port/driving"
 	"net/http"
 	"strings"
 )
@@ -13,7 +14,7 @@ import (
 type httpOutput struct {
 }
 
-func NewHttpOutput() *httpOutput {
+func NewHttpOutput() driving.HttpOutput {
 	return &httpOutput{}
 }
 

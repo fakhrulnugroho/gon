@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"gon/hexagonal/adapter"
 	"gon/hexagonal/adapter/cli/common"
-	"gon/hexagonal/adapter/cli/http"
+	"gon/hexagonal/adapter/cli/httpcli"
 	"gon/hexagonal/core/service"
 	"log"
 	"net/http"
@@ -28,7 +28,7 @@ func main() {
 		common.VersionCommand(versionService),
 	}
 
-	cmd := &cli.Command{
+	command := &cli.Command{
 		Name:  "gon",
 		Usage: "An interactive HTTP client for terminal lovers",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -39,7 +39,7 @@ func main() {
 		Commands: commands,
 	}
 
-	if err := cmd.Run(context.Background(), os.Args); err != nil {
+	if err := command.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
 }
