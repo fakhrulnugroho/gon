@@ -39,5 +39,10 @@ func (b *RequestBuilder) Body(body []byte) *RequestBuilder {
 }
 
 func (b *RequestBuilder) Build() *RequestBuilder {
-	return b
+	return &RequestBuilder{
+		method:  b.method,
+		url:     b.url,
+		headers: b.headers,
+		body:    b.body,
+	}
 }

@@ -48,14 +48,13 @@ func (c *Client) Execute(request *RequestBuilder) *Result {
 
 	req, err := http.NewRequest(request.method, request.url, requestBody)
 
-	if request.headers != nil {
-		for key, value := range request.headers {
-			req.Header.Add(key, value)
-		}
-	}
 	if err != nil {
-		fmt.Println("request error:", err)
+		fmt.Println("error request building request :", err)
 		return nil
+	}
+
+	for key, value := range request.headers {
+		req.Header.Add(key, value)
 	}
 
 	client := &http.Client{}
