@@ -6,16 +6,19 @@ import (
 	"gon/internal/adapter"
 	"gon/internal/adapter/cli/common"
 	"gon/internal/adapter/cli/httpcli"
+	"gon/internal/color"
 	"gon/internal/core/service"
 	"gon/internal/version"
-	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/chzyer/readline"
+	"github.com/mattn/go-shellwords"
 	"github.com/urfave/cli/v3"
 )
 
-func main() {
+func cliApp() *cli.Command {
 	httpService := adapter.NewHttpService(&http.Client{})
 	httpOutput := service.NewHttpOutput()
 	versionService := service.NewVersionService(version.Version, version.OS, version.Arch)
@@ -39,8 +42,55 @@ func main() {
 		},
 		Commands: commands,
 	}
+	return command
+}
 
-	if err := command.Run(context.Background(), os.Args); err != nil {
-		log.Fatal(err)
+func repl() {
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:          color.Info("gon> "),
+		HistoryFile:     "/tmp/gon.history",
+		InterruptPrompt: "^C",
+		EOFPrompt:       "exit",
+	})
+
+	if err != nil {
+		fmt.Println("errors ", err)
+		os.Exit(1)
+	}
+
+	defer rl.Close()
+
+	fmt.Println("gon — An interactive HTTP client for terminal lovers")
+	fmt.Println("Type 'help' for available commands")
+
+	for {
+		line, err := rl.Readline()
+
+		if err != nil {
+			break
+		}
+
+		input := strings.TrimSpace(line)
+
+		if input == "" {
+			continue
+		}
+
+		args, _ := shellwords.Parse(line)
+		if err := cliApp().Run(context.Background(), append([]string{"gon"}, args...)); err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
+func main() {
+	args := os.Args
+
+	if len(args) > 1 {
+		if err := cliApp().Run(context.Background(), args); err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		repl()
 	}
 }
