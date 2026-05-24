@@ -52,13 +52,13 @@ func parse(args []string) (*httpclient.RequestBuilder, error) {
 
 		token := args[i]
 
-		option, exists := option.Registry[token]
+		handler, exists := option.Find(token)
 
 		if !exists {
-			return nil, fmt.Errorf("unknown option: %s", token)
+			return nil, fmt.Errorf("unknown handler: %s", token)
 		}
 
-		argCount := option.ArgCount()
+		argCount := handler.ArgCount()
 
 		start := i + 1
 		end := start + argCount
@@ -67,7 +67,7 @@ func parse(args []string) (*httpclient.RequestBuilder, error) {
 			return nil, fmt.Errorf("not enough args for %s", token)
 		}
 
-		err := option.Apply(rb, args[start:end])
+		err := handler.Apply(rb, args[start:end])
 
 		if err != nil {
 			return nil, err

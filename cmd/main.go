@@ -19,7 +19,8 @@ func interactive() {
 	})
 
 	if err != nil {
-		panic(err)
+		fmt.Println("errors ", err)
+		os.Exit(1)
 	}
 
 	defer rl.Close()

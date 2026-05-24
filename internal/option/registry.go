@@ -8,7 +8,12 @@ type Handler interface {
 	Apply(rb *httpclient.RequestBuilder, args []string) error
 }
 
-var Registry = map[string]Handler{
+var registry = map[string]Handler{
 	"--json":   JsonOption{},
 	"--header": HeaderOption{},
+}
+
+func Find(token string) (Handler, bool) {
+	h, ok := registry[token]
+	return h, ok
 }

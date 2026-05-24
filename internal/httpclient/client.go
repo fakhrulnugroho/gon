@@ -29,7 +29,6 @@ type Response struct {
 type Result struct {
 	Request  Request
 	Response Response
-	Error    error
 }
 
 type Client struct {
