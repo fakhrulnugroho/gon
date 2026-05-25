@@ -14,12 +14,16 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 	return &cli.Command{
 		Name:  method,
 		Usage: "Send an HTTP " + strings.ToUpper(method) + " request",
+		Arguments: []cli.Argument{
+			&cli.StringArg{
+				Name:      "url",
+				UsageText: "URL to send the " + strings.ToUpper(method) + " request to",
+			},
+		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			input := &payload.HttpExecuteInput{
 				Method: strings.ToUpper(method),
-			}
-			if cmd.NArg() > 0 {
-				input.URL = cmd.Args().First()
+				URL:    cmd.StringArg("url"),
 			}
 
 			if cmd.String("json") != "" {
@@ -41,6 +45,10 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 				Name:  "json",
 				Value: "",
 				Usage: "JSON payload for the POST request",
+			},
+			&cli.StringSliceFlag{
+				Name:  "header",
+				Usage: "HTTP headers for the request",
 			},
 		},
 	}

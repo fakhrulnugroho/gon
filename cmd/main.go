@@ -31,11 +31,19 @@ func cliApp() *cli.Command {
 		httpcli.HttpCommand("patch", httpService, httpOutput),
 		common.VersionCommand(versionService),
 	}
-
 	return &cli.Command{
 		Name:  "gon",
 		Usage: "An interactive HTTP client for terminal lovers",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			firstCmd := cmd.Args().First()
+
+			for _, arg := range commands {
+				if firstCmd != arg.Name {
+					fmt.Printf("Command '%s' not found\n", firstCmd)
+					fmt.Println("Type 'help' for available commands")
+					return nil
+				}
+			}
 			fmt.Println("gon — An interactive HTTP client for terminal lovers")
 			fmt.Println("Type 'help' for available commands")
 			return nil
@@ -76,6 +84,10 @@ func repl() {
 		}
 
 		args, _ := shellwords.Parse(line)
+		if strings.HasPrefix(args[0], "-") {
+			fmt.Println("Invalid command: options must be specified before the command")
+			continue
+		}
 		if err := cliApp().Run(context.Background(), append([]string{"gon"}, args...)); err != nil {
 			fmt.Println(err)
 		}
