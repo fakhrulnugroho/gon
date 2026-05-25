@@ -1,4 +1,4 @@
-package httpcli
+package command
 
 import (
 	"context"
@@ -38,6 +38,13 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 				Headers: headers,
 			}
 
+			mode := 1
+			if cmd.Bool("minimal") {
+				mode = 0
+			} else if cmd.Bool("full") {
+				mode = 2
+			}
+
 			if cmd.String("json") != "" {
 				input.Body = []byte(cmd.String("json"))
 				if _, exists := input.Headers["Content-Type"]; !exists {
@@ -49,7 +56,7 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 			if err != nil {
 				return err
 			}
-			httpOutput.Format(input, result)
+			httpOutput.Format(input, result, mode)
 			return nil
 		},
 		Flags: []cli.Flag{
@@ -61,6 +68,19 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 			&cli.StringSliceFlag{
 				Name:  "header",
 				Usage: `HTTP header in "Key: Value" format, can be repeated`,
+			},
+			&cli.BoolFlag{
+				Name:  "minimal",
+				Usage: `Minimal output, only print status code and headers`,
+			},
+			&cli.BoolFlag{
+				Name:  "normal",
+				Usage: `Normal output, print status code, headers, and body`,
+				Value: true,
+			},
+			&cli.BoolFlag{
+				Name:  "full",
+				Usage: `Full output, print request and response details`,
 			},
 		},
 	}

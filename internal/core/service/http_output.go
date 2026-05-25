@@ -18,7 +18,27 @@ func NewHttpOutput() driving.HttpOutput {
 	return &httpOutput{}
 }
 
-func (h *httpOutput) Format(input *payload.HttpExecuteInput, output *payload.HttpExecuteOutput) {
+func (h *httpOutput) Format(input *payload.HttpExecuteInput, output *payload.HttpExecuteOutput, mode int) {
+	if mode > 1 {
+		fmt.Print("\n")
+		for header, values := range input.Headers {
+			for _, value := range values {
+				fmt.Println(color.Info(header+":"), color.Secondary(value))
+			}
+		}
+		fmt.Print("\n")
+		if input.Body != nil {
+			fmt.Println(prettyJSON(input.Body))
+		}
+	}
+	if mode > 0 {
+		fmt.Print("\n")
+		for header, values := range output.Headers {
+			for _, value := range values {
+				fmt.Println(color.Info(header+":"), color.Secondary(value))
+			}
+		}
+	}
 	printBasicHeader(output)
 	printBasicFooter(output)
 }

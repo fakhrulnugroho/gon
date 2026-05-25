@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 	"gon/internal/adapter"
-	"gon/internal/adapter/cli/common"
-	"gon/internal/adapter/cli/httpcli"
+	"gon/internal/adapter/command"
 	"gon/internal/color"
 	"gon/internal/core/service"
 	"gon/internal/version"
@@ -24,22 +23,22 @@ func cliApp() *cli.Command {
 	versionService := service.NewVersionService(version.Version, version.OS, version.Arch)
 
 	httpCommands := []*cli.Command{
-		httpcli.GetCommand(httpService, httpOutput),
-		httpcli.HttpCommand("post", httpService, httpOutput),
-		httpcli.HttpCommand("put", httpService, httpOutput),
-		httpcli.HttpCommand("delete", httpService, httpOutput),
-		httpcli.HttpCommand("patch", httpService, httpOutput),
+		command.HttpCommand(strings.ToLower(http.MethodGet), httpService, httpOutput),
+		command.HttpCommand(strings.ToLower(http.MethodPost), httpService, httpOutput),
+		command.HttpCommand(strings.ToLower(http.MethodPut), httpService, httpOutput),
+		command.HttpCommand(strings.ToLower(http.MethodDelete), httpService, httpOutput),
+		command.HttpCommand(strings.ToLower(http.MethodPatch), httpService, httpOutput),
 	}
 	utilityCommands := []*cli.Command{
-		common.VersionCommand(versionService),
+		command.VersionCommand(versionService),
 	}
 
-	groups := []common.CommandGroup{
+	groups := []command.CommandGroup{
 		{Name: "HTTP Commands", Commands: httpCommands},
 		{Name: "Common", Commands: utilityCommands},
 	}
 
-	helpCmd := common.HelpCommand(groups)
+	helpCmd := command.HelpCommand(groups)
 	utilityCommands = append(utilityCommands, helpCmd)
 	groups[1].Commands = utilityCommands
 
