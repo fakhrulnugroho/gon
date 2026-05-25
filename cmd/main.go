@@ -23,17 +23,32 @@ func cliApp() *cli.Command {
 	httpOutput := service.NewHttpOutput()
 	versionService := service.NewVersionService(version.Version, version.OS, version.Arch)
 
-	commands := []*cli.Command{
+	httpCommands := []*cli.Command{
 		httpcli.GetCommand(httpService, httpOutput),
 		httpcli.HttpCommand("post", httpService, httpOutput),
 		httpcli.HttpCommand("put", httpService, httpOutput),
 		httpcli.HttpCommand("delete", httpService, httpOutput),
 		httpcli.HttpCommand("patch", httpService, httpOutput),
+	}
+	utilityCommands := []*cli.Command{
 		common.VersionCommand(versionService),
 	}
+
+	groups := []common.CommandGroup{
+		{Name: "HTTP Commands", Commands: httpCommands},
+		{Name: "Common", Commands: utilityCommands},
+	}
+
+	helpCmd := common.HelpCommand(groups)
+	utilityCommands = append(utilityCommands, helpCmd)
+	groups[1].Commands = utilityCommands
+
+	commands := append(httpCommands, utilityCommands...)
 	return &cli.Command{
-		Name:  "gon",
-		Usage: "An interactive HTTP client for terminal lovers",
+		Name:            "gon",
+		Usage:           "An interactive HTTP client for terminal lovers",
+		HideHelp:        true,
+		HideHelpCommand: true,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if firstCmd := cmd.Args().First(); firstCmd != "" {
 				fmt.Printf("Command '%s' not found\n", firstCmd)

@@ -12,8 +12,9 @@ import (
 
 func HttpCommand(method string, httpService driven.HttpService, httpOutput driving.HttpOutput) *cli.Command {
 	return &cli.Command{
-		Name:  method,
-		Usage: "Send an HTTP " + strings.ToUpper(method) + " request",
+		Name:      method,
+		Usage:     "Send an HTTP " + strings.ToUpper(method) + " request",
+		ArgsUsage: "<url>",
 		Arguments: []cli.Argument{
 			&cli.StringArg{
 				Name:      "url",
