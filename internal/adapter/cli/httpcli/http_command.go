@@ -21,15 +21,26 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			headers := make(map[string][]string)
+			for _, h := range cmd.StringSlice("header") {
+				parts := strings.SplitN(h, ":", 2)
+				if len(parts) == 2 {
+					key := strings.TrimSpace(parts[0])
+					val := strings.TrimSpace(parts[1])
+					headers[key] = append(headers[key], val)
+				}
+			}
+
 			input := &payload.HttpExecuteInput{
-				Method: strings.ToUpper(method),
-				URL:    cmd.StringArg("url"),
+				Method:  strings.ToUpper(method),
+				URL:     cmd.StringArg("url"),
+				Headers: headers,
 			}
 
 			if cmd.String("json") != "" {
 				input.Body = []byte(cmd.String("json"))
-				input.Headers = map[string][]string{
-					"Content-Type": {"application/json"},
+				if _, exists := input.Headers["Content-Type"]; !exists {
+					input.Headers["Content-Type"] = []string{"application/json"}
 				}
 			}
 
@@ -44,11 +55,11 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 			&cli.StringFlag{
 				Name:  "json",
 				Value: "",
-				Usage: "JSON payload for the POST request",
+				Usage: "JSON body for the request",
 			},
 			&cli.StringSliceFlag{
 				Name:  "header",
-				Usage: "HTTP headers for the request",
+				Usage: `HTTP header in "Key: Value" format, can be repeated`,
 			},
 		},
 	}

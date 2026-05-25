@@ -53,6 +53,7 @@ func (s *httpService) Execute(ctx context.Context, input *payload.HttpExecuteInp
 	result := payload.HttpExecuteOutput{
 		Body:       responseBody,
 		StatusCode: res.StatusCode,
+		Headers:    map[string][]string(res.Header),
 		Metadata: payload.Metadata{
 			ExecutionTime: time.Since(start),
 			ContentType:   res.Header.Get("Content-Type"),

@@ -35,14 +35,10 @@ func cliApp() *cli.Command {
 		Name:  "gon",
 		Usage: "An interactive HTTP client for terminal lovers",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			firstCmd := cmd.Args().First()
-
-			for _, arg := range commands {
-				if firstCmd != arg.Name {
-					fmt.Printf("Command '%s' not found\n", firstCmd)
-					fmt.Println("Type 'help' for available commands")
-					return nil
-				}
+			if firstCmd := cmd.Args().First(); firstCmd != "" {
+				fmt.Printf("Command '%s' not found\n", firstCmd)
+				fmt.Println("Type 'help' for available commands")
+				return nil
 			}
 			fmt.Println("gon — An interactive HTTP client for terminal lovers")
 			fmt.Println("Type 'help' for available commands")
