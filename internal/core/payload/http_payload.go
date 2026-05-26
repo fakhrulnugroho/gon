@@ -6,6 +6,7 @@ type HttpExecuteInput struct {
 	Method  string
 	URL     string
 	Headers map[string][]string
+	Query   map[string][]string
 	Body    []byte
 }
 

@@ -38,6 +38,16 @@ func (s *httpService) Execute(ctx context.Context, input *payload.HttpExecuteInp
 
 	req.Header = input.Headers
 
+	if len(input.Query) > 0 {
+		q := req.URL.Query()
+		for key, values := range input.Query {
+			for _, value := range values {
+				q.Add(key, value)
+			}
+		}
+		req.URL.RawQuery = q.Encode()
+	}
+
 	res, err := s.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("response error: %w", err)
@@ -57,7 +67,8 @@ func (s *httpService) Execute(ctx context.Context, input *payload.HttpExecuteInp
 		Metadata: payload.Metadata{
 			ExecutionTime: time.Since(start),
 			ContentType:   res.Header.Get("Content-Type"),
-			ContentLength: res.ContentLength},
+			ContentLength: res.ContentLength,
+		},
 	}
 
 	return &result, nil

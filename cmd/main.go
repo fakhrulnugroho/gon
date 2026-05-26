@@ -80,6 +80,8 @@ func repl() {
 	fmt.Println("gon — An interactive HTTP client for terminal lovers")
 	fmt.Println("Type 'help' for available commands")
 
+	gon_app := cliApp()
+
 	for {
 		line, err := rl.Readline()
 
@@ -98,7 +100,7 @@ func repl() {
 			fmt.Println("Invalid command: options must be specified before the command")
 			continue
 		}
-		if err := cliApp().Run(context.Background(), append([]string{"gon"}, args...)); err != nil {
+		if err := gon_app.Run(context.Background(), append([]string{"gon"}, args...)); err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println()

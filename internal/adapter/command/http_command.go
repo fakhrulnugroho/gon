@@ -45,6 +45,7 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 			input := &payload.HttpExecuteInput{
 				Method:  strings.ToUpper(method),
 				URL:     cmd.StringArg("url"),
+				Query:   query,
 				Headers: headers,
 			}
 
