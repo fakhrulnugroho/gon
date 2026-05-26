@@ -20,14 +20,19 @@ func NewHttpOutput() driving.HttpOutput {
 
 func (h *httpOutput) Format(input *payload.HttpExecuteInput, output *payload.HttpExecuteOutput, mode int) {
 	if mode > 1 {
-		fmt.Print("\n")
+		if input.URL != "" && input.Method != "" {
+			fmt.Println(color.Info(input.Method), color.Secondary(input.URL))
+		}
+		if input.Headers != nil {
+			fmt.Print("\n")
+		}
 		for header, values := range input.Headers {
 			for _, value := range values {
 				fmt.Println(color.Info(header+":"), color.Secondary(value))
 			}
 		}
-		fmt.Print("\n")
 		if input.Body != nil {
+			fmt.Print("\n")
 			fmt.Println(prettyJSON(input.Body))
 		}
 	}

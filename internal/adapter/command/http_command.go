@@ -23,6 +23,7 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			headers := make(map[string][]string)
+			query := make(map[string][]string)
 			for _, h := range cmd.StringSlice("header") {
 				parts := strings.SplitN(h, ":", 2)
 				if len(parts) == 2 {
@@ -32,10 +33,24 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 				}
 			}
 
+			for _, h := range cmd.StringSlice("query") {
+				parts := strings.SplitN(h, "=", 2)
+				if len(parts) == 2 {
+					key := strings.TrimSpace(parts[0])
+					val := strings.TrimSpace(parts[1])
+					query[key] = append(query[key], val)
+				}
+			}
+
 			input := &payload.HttpExecuteInput{
 				Method:  strings.ToUpper(method),
 				URL:     cmd.StringArg("url"),
 				Headers: headers,
+			}
+
+			if cmd.String("json") != "" {
+				input.Body = []byte(cmd.String("json"))
+				headers["Content-Type"] = append(headers["Content-Type"], "application/json")
 			}
 
 			mode := 1
@@ -43,13 +58,6 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 				mode = 0
 			} else if cmd.Bool("full") {
 				mode = 2
-			}
-
-			if cmd.String("json") != "" {
-				input.Body = []byte(cmd.String("json"))
-				if _, exists := input.Headers["Content-Type"]; !exists {
-					input.Headers["Content-Type"] = []string{"application/json"}
-				}
 			}
 
 			result, err := httpService.Execute(ctx, input)
@@ -68,6 +76,10 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drivi
 			&cli.StringSliceFlag{
 				Name:  "header",
 				Usage: `HTTP header in "Key: Value" format, can be repeated`,
+			},
+			&cli.StringSliceFlag{
+				Name:  "query",
+				Usage: `HTTP query parameter in "Key=Value" format, can be repeated`,
 			},
 			&cli.BoolFlag{
 				Name:  "minimal",
