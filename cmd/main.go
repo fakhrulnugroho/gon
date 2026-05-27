@@ -98,7 +98,11 @@ func repl() {
 			continue
 		}
 
-		args, _ := shellwords.Parse(line)
+		args, err := shellwords.Parse(line)
+		if err != nil || len(args) == 0 {
+			fmt.Println("Invalid input:", line)
+			continue
+		}
 		if strings.HasPrefix(args[0], "-") {
 			fmt.Println("Invalid command: options must be specified before the command")
 			continue

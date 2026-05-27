@@ -56,6 +56,8 @@ func HttpCommand(method string, httpService driven.HttpService, httpOutput drive
 			mode := 1
 			if cmd.Bool("minimal") {
 				mode = 0
+			} else if cmd.Bool("normal") {
+				mode = 1
 			} else if cmd.Bool("full") {
 				mode = 2
 			}
