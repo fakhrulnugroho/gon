@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"gon/internal/adapter"
 	"gon/internal/adapter/command"
+	"gon/internal/adapter/formatter"
+	"gon/internal/adapter/output"
 	"gon/internal/color"
 	"gon/internal/core/service"
 	"gon/internal/version"
@@ -18,8 +19,9 @@ import (
 )
 
 func cliApp() *cli.Command {
-	httpService := adapter.NewHttpService(&http.Client{})
-	httpOutput := service.NewHttpOutput()
+	httpService := service.NewHttpService(&http.Client{})
+	jsonFormatter := formatter.NewJsonFormatter()
+	httpOutput := output.NewHttpOutput(jsonFormatter)
 	versionService := service.NewVersionService(version.Version, version.OS, version.Arch)
 
 	httpCommands := []*cli.Command{
