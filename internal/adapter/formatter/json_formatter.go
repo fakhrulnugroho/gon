@@ -5,13 +5,13 @@ import (
 	"gon/internal/utility"
 )
 
-type jsonOutput struct {
+type jsonFormatter struct {
 }
 
 func NewJsonFormatter() driven.Formatter[[]byte] {
-	return &jsonOutput{}
+	return &jsonFormatter{}
 }
 
-func (h *jsonOutput) Format(data []byte) string {
+func (h *jsonFormatter) Format(data []byte) string {
 	return utility.PrettyJSON(data)
 }

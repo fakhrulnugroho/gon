@@ -3,7 +3,6 @@ package utility
 import (
 	"bytes"
 	"encoding/json"
-	"gon/internal/color"
 	"strings"
 )
 
@@ -30,28 +29,28 @@ func highlightJSON(input string) string {
 		case '"':
 			token, next := readJSONString(input, i)
 			if isJSONKey(input, next) {
-				builder.WriteString(color.JSONKey(token))
+				builder.WriteString(JSONKey(token))
 			} else {
-				builder.WriteString(color.JSONString(token))
+				builder.WriteString(JSONString(token))
 			}
 			i = next
 		case '{', '}', '[', ']', ':', ',':
-			builder.WriteString(color.JSONPunctuation(input[i : i+1]))
+			builder.WriteString(JSONPunctuation(input[i : i+1]))
 			i++
 		case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			next := readJSONNumber(input, i)
-			builder.WriteString(color.JSONNumber(input[i:next]))
+			builder.WriteString(JSONNumber(input[i:next]))
 			i = next
 		default:
 			switch {
 			case strings.HasPrefix(input[i:], "true"):
-				builder.WriteString(color.JSONBool("true"))
+				builder.WriteString(JSONBool("true"))
 				i += len("true")
 			case strings.HasPrefix(input[i:], "false"):
-				builder.WriteString(color.JSONBool("false"))
+				builder.WriteString(JSONBool("false"))
 				i += len("false")
 			case strings.HasPrefix(input[i:], "null"):
-				builder.WriteString(color.JSONNull("null"))
+				builder.WriteString(JSONNull("null"))
 				i += len("null")
 			default:
 				builder.WriteByte(input[i])
@@ -103,4 +102,28 @@ func isJSONKey(input string, start int) bool {
 	}
 
 	return false
+}
+
+func JSONKey(text string) string {
+	return formatColor("#88C0D0", text)
+}
+
+func JSONString(text string) string {
+	return formatColor("#A3BE8C", text)
+}
+
+func JSONNumber(text string) string {
+	return formatColor("#B48EAD", text)
+}
+
+func JSONBool(text string) string {
+	return formatColor("#D08770", text)
+}
+
+func JSONNull(text string) string {
+	return formatColor("#BF616A", text)
+}
+
+func JSONPunctuation(text string) string {
+	return formatColor("#D8DEE9", text)
 }

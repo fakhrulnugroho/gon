@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
-	"gon/internal/color"
+	"gon/internal/utility"
 
 	"github.com/urfave/cli/v3"
 )
@@ -27,7 +27,7 @@ func HelpCommand(groups []CommandGroup) *cli.Command {
 func printHelp(groups []CommandGroup) {
 	for _, group := range groups {
 		fmt.Println()
-		fmt.Println(color.Info(group.Name + ":"))
+		fmt.Println(utility.ColorInfo(group.Name + ":"))
 		for _, cmd := range group.Commands {
 			printEntry(cmd.Name, cmd.ArgsUsage, cmd.Usage)
 			for _, f := range cmd.Flags {
@@ -38,15 +38,15 @@ func printHelp(groups []CommandGroup) {
 }
 
 func printEntry(name, args, desc string) {
-	nameCol := color.Success(fmt.Sprintf("  %-8s", name))
-	argsCol := color.Secondary(fmt.Sprintf("%-6s", args))
+	nameCol := utility.ColorSuccess(fmt.Sprintf("  %-8s", name))
+	argsCol := utility.ColorSecondary(fmt.Sprintf("%-6s", args))
 	fmt.Printf("%s %s  %s\n", nameCol, argsCol, desc)
 }
 
 func printFlag(f cli.Flag) {
 	name := "--" + f.Names()[0]
 	usage := flagUsage(f)
-	fmt.Printf("  %s  %s\n", color.Warning(fmt.Sprintf("  %-10s", name)), color.Secondary(usage))
+	fmt.Printf("  %s  %s\n", utility.ColorWarning(fmt.Sprintf("  %-10s", name)), utility.ColorSecondary(usage))
 }
 
 func flagUsage(f cli.Flag) string {

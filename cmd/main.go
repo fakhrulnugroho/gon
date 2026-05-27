@@ -6,8 +6,8 @@ import (
 	"gon/internal/adapter/command"
 	"gon/internal/adapter/formatter"
 	"gon/internal/adapter/output"
-	"gon/internal/color"
 	"gon/internal/core/service"
+	"gon/internal/utility"
 	"gon/internal/version"
 	"net/http"
 	"os"
@@ -18,10 +18,11 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func cliApp() *cli.Command {
+func cli_app() *cli.Command {
 	httpService := service.NewHttpService(&http.Client{})
 	jsonFormatter := formatter.NewJsonFormatter()
-	httpOutput := output.NewHttpOutput(jsonFormatter)
+	keyPairFormatter := formatter.NewKeyPairFormatter()
+	httpOutput := output.NewHttpOutput(jsonFormatter, keyPairFormatter)
 	versionService := service.NewVersionService(version.Version, version.OS, version.Arch)
 
 	httpCommands := []*cli.Command{
@@ -66,7 +67,7 @@ func cliApp() *cli.Command {
 
 func repl() {
 	rl, err := readline.NewEx(&readline.Config{
-		Prompt:          color.Info("gon> "),
+		Prompt:          utility.ColorInfo("gon> "),
 		HistoryFile:     "/tmp/gon.history",
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
@@ -82,7 +83,7 @@ func repl() {
 	fmt.Println("gon — An interactive HTTP client for terminal lovers")
 	fmt.Println("Type 'help' for available commands")
 
-	gon_app := cliApp()
+	gon_app := cli_app()
 
 	for {
 		line, err := rl.Readline()
@@ -113,7 +114,7 @@ func main() {
 	args := os.Args
 
 	if len(args) > 1 {
-		if err := cliApp().Run(context.Background(), args); err != nil {
+		if err := cli_app().Run(context.Background(), args); err != nil {
 			fmt.Println(err)
 		}
 	} else {
