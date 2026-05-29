@@ -1,6 +1,7 @@
 package formatter
 
 import (
+	"gon/internal/core/port/driven"
 	"gon/internal/utility"
 	"sort"
 	"strings"
@@ -9,7 +10,7 @@ import (
 type keyPairFormatter struct {
 }
 
-func NewKeyPairFormatter() Formatter[map[string]string] {
+func NewKeyPairFormatter() driven.Formatter[map[string]string] {
 	return &keyPairFormatter{}
 }
 

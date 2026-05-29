@@ -98,7 +98,6 @@ func HttpCommand(method string, httpService driving.HttpService, httpOutput driv
 			&cli.BoolFlag{
 				Name:  "normal",
 				Usage: `Normal output, print status code, headers, and body`,
-				Value: true,
 			},
 			&cli.BoolFlag{
 				Name:  "full",

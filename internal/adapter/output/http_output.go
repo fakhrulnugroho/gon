@@ -2,7 +2,6 @@ package output
 
 import (
 	"fmt"
-	"gon/internal/adapter/formatter"
 	"gon/internal/core/payload"
 	"gon/internal/core/port/driven"
 	"gon/internal/utility"
@@ -11,11 +10,11 @@ import (
 )
 
 type httpOutput struct {
-	jsonFormatter    formatter.Formatter[[]byte]
-	keyPairFormatter formatter.Formatter[map[string]string]
+	jsonFormatter    driven.Formatter[[]byte]
+	keyPairFormatter driven.Formatter[map[string]string]
 }
 
-func NewHttpOutput(jsonFormatter formatter.Formatter[[]byte], keyPairFormatter formatter.Formatter[map[string]string]) driven.HttpOutput {
+func NewHttpOutput(jsonFormatter driven.Formatter[[]byte], keyPairFormatter driven.Formatter[map[string]string]) driven.HttpOutput {
 	return &httpOutput{jsonFormatter: jsonFormatter, keyPairFormatter: keyPairFormatter}
 }
 
