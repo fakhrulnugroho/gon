@@ -1,14 +1,13 @@
 package formatter
 
 import (
-	"gon/internal/core/port/driven"
 	"gon/internal/utility"
 )
 
 type jsonFormatter struct {
 }
 
-func NewJsonFormatter() driven.Formatter[[]byte] {
+func NewJsonFormatter() Formatter[[]byte] {
 	return &jsonFormatter{}
 }
 
