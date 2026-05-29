@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/chzyer/readline"
 	"github.com/mattn/go-shellwords"
@@ -19,7 +20,7 @@ import (
 )
 
 func cli_app() *cli.Command {
-	httpService := service.NewHttpService(&http.Client{})
+	httpService := service.NewHttpService(&http.Client{Timeout: 30 * time.Second})
 	jsonFormatter := formatter.NewJsonFormatter()
 	keyPairFormatter := formatter.NewKeyPairFormatter()
 	httpOutput := output.NewHttpOutput(jsonFormatter, keyPairFormatter)

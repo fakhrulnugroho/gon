@@ -6,6 +6,7 @@ import (
 	"gon/internal/core/port/driven"
 	"gon/internal/core/port/driving"
 	"strings"
+	"time"
 
 	"github.com/urfave/cli/v3"
 )
@@ -47,6 +48,12 @@ func HttpCommand(method string, httpService driving.HttpService, httpOutput driv
 				URL:     cmd.StringArg("url"),
 				Query:   query,
 				Headers: headers,
+			}
+
+			if d := cmd.Duration("timeout"); d > 0 {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(ctx, d)
+				defer cancel()
 			}
 
 			if cmd.String("json") != "" {
@@ -96,6 +103,11 @@ func HttpCommand(method string, httpService driving.HttpService, httpOutput driv
 			&cli.BoolFlag{
 				Name:  "full",
 				Usage: `Full output, print request and response details`,
+			},
+			&cli.DurationFlag{
+				Name:  "timeout",
+				Value: 30 * time.Second,
+				Usage: `Request timeout duration`,
 			},
 		},
 	}

@@ -59,6 +59,8 @@ func flagUsage(f cli.Flag) string {
 		return v.Usage
 	case *cli.IntFlag:
 		return v.Usage
+	case *cli.DurationFlag:
+		return v.Usage
 	}
 	return ""
 }
