@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gon/internal/adapter/command"
 	"gon/internal/adapter/output"
+	"gon/internal/adapter/repository"
 	"gon/internal/core/formatter"
 	"gon/internal/core/service"
 	"gon/internal/utility"
@@ -25,6 +26,8 @@ func cli_app() *cli.Command {
 	keyPairFormatter := formatter.NewKeyPairFormatter()
 	httpOutput := output.NewHttpOutput(jsonFormatter, keyPairFormatter)
 	versionService := service.NewVersionService(version.Version, version.OS, version.Arch)
+	workspaceRepository := repository.NewWorkspaceRepository()
+	workspaceService := service.NewWorkspaceService(workspaceRepository)
 
 	httpCommands := []*cli.Command{
 		command.HttpCommand(strings.ToLower(http.MethodGet), httpService, httpOutput),
@@ -37,16 +40,22 @@ func cli_app() *cli.Command {
 		command.VersionCommand(versionService),
 	}
 
+	workspaceCommands := []*cli.Command{
+		command.WorkspaceInitCommand(workspaceService),
+	}
+
 	groups := []command.CommandGroup{
 		{Name: "HTTP Commands", Commands: httpCommands},
+		{Name: "Workspace", Commands: workspaceCommands},
 		{Name: "Common", Commands: utilityCommands},
 	}
 
 	helpCmd := command.HelpCommand(groups)
 	utilityCommands = append(utilityCommands, helpCmd)
-	groups[1].Commands = utilityCommands
+	groups[2].Commands = utilityCommands
 
-	commands := append(httpCommands, utilityCommands...)
+	commands := append(httpCommands, workspaceCommands...)
+	commands = append(commands, utilityCommands...)
 	return &cli.Command{
 		Name:            "gon",
 		Usage:           "An interactive HTTP client for terminal lovers",
