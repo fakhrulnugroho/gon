@@ -2,7 +2,7 @@ package service
 
 import (
 	"fmt"
-	"gon/internal/core/port/driven"
+	"gon/internal/core/port/driving"
 )
 
 type versionService struct {
@@ -11,7 +11,7 @@ type versionService struct {
 	arch    string
 }
 
-func NewVersionService(version string, os string, arch string) driven.VersionService {
+func NewVersionService(version string, os string, arch string) driving.VersionService {
 	return &versionService{version: version, os: os, arch: arch}
 }
 

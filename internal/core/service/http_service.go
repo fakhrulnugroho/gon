@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"gon/internal/core/payload"
-	"gon/internal/core/port/driven"
+	"gon/internal/core/port/driving"
 	"io"
 	"net/http"
 	"time"
@@ -15,7 +15,7 @@ type httpService struct {
 	httpClient *http.Client
 }
 
-func NewHttpService(httpClient *http.Client) driven.HttpService {
+func NewHttpService(httpClient *http.Client) driving.HttpService {
 	return &httpService{
 		httpClient: httpClient,
 	}

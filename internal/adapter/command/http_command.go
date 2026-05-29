@@ -4,12 +4,13 @@ import (
 	"context"
 	"gon/internal/core/payload"
 	"gon/internal/core/port/driven"
+	"gon/internal/core/port/driving"
 	"strings"
 
 	"github.com/urfave/cli/v3"
 )
 
-func HttpCommand(method string, httpService driven.HttpService, httpOutput driven.HttpOutput) *cli.Command {
+func HttpCommand(method string, httpService driving.HttpService, httpOutput driven.HttpOutput) *cli.Command {
 	return &cli.Command{
 		Name:      method,
 		Usage:     "Send an HTTP " + strings.ToUpper(method) + " request",

@@ -3,12 +3,12 @@ package command
 import (
 	"context"
 	"fmt"
-	"gon/internal/core/port/driven"
+	"gon/internal/core/port/driving"
 
 	"github.com/urfave/cli/v3"
 )
 
-func VersionCommand(versionService driven.VersionService) *cli.Command {
+func VersionCommand(versionService driving.VersionService) *cli.Command {
 	return &cli.Command{
 		Name:  "version",
 		Usage: "Print the version",
