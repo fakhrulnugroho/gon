@@ -45,7 +45,10 @@ func (h *httpOutput) Format(input *payload.HttpExecuteInput, output *payload.Htt
 	if mode > 0 {
 		headers := make(map[string]string)
 		for k, v := range output.Headers {
-			headers[k] = v[0]
+			if len(v) == 0 {
+				continue
+			}
+			headers[k] = strings.Join(v, ", ")
 		}
 		fmt.Println(h.keyPairFormatter.Format(headers))
 	}
