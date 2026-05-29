@@ -25,7 +25,7 @@ func (h *httpOutput) Format(input *payload.HttpExecuteInput, output *payload.Htt
 		if input.URL != "" && input.Method != "" {
 			fmt.Println(utility.ColorInfo(input.Method), utility.ColorSecondary(input.URL))
 		}
-		if input.Headers != nil {
+		if len(input.Headers) > 0 {
 			fmt.Print("\n")
 		}
 		for header, values := range input.Headers {
