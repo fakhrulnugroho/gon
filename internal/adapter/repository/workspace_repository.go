@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"gon/internal/adapter/model"
 	"gon/internal/core/domain"
 	"os"
 	"path/filepath"
@@ -15,12 +16,12 @@ func NewWorkspaceRepository() *workspaceRepository {
 	return &workspaceRepository{}
 }
 
-func (r *workspaceRepository) Save(workspace domain.Workspace) error {
-	data, err := yaml.Marshal(workspace)
+func (r *workspaceRepository) Save(directory string, workspace domain.Workspace) error {
+	data, err := yaml.Marshal(model.NewWorkspaceModelFromDomain(workspace))
 	if err != nil {
 		return err
 	}
-	gonDirectory := filepath.Join(workspace.WorkingDirectory, ".gon")
+	gonDirectory := filepath.Join(directory, ".gon")
 	os.Mkdir(gonDirectory, 0755)
 	os.WriteFile(filepath.Join(gonDirectory, "workspace.yaml"), data, 0755)
 	return nil

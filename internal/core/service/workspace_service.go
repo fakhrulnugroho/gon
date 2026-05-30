@@ -18,11 +18,11 @@ func NewWorkspaceService(repo driven.WorkspaceRepository) driving.WorkspaceServi
 
 func (s *workspaceService) Create(directory string) error {
 	workspace := domain.Workspace{
-		Name:             getFolderName(directory),
-		Config:           domain.Config{},
-		WorkingDirectory: directory,
+		Name:    getFolderName(directory),
+		Config:  domain.Config{},
+		BaseURL: "https://api.example.com",
 	}
-	return s.workspaceRepository.Save(workspace)
+	return s.workspaceRepository.Save(directory, workspace)
 }
 
 func getFolderName(directory string) string {

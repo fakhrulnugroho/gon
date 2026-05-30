@@ -3,5 +3,5 @@ package driven
 import "gon/internal/core/domain"
 
 type WorkspaceRepository interface {
-	Save(workspace domain.Workspace) error
+	Save(directory string, workspace domain.Workspace) error
 }
