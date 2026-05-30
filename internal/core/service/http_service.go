@@ -4,19 +4,23 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"gon/internal/core/domain"
 	"gon/internal/core/payload"
 	"gon/internal/core/port/driving"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
 type httpService struct {
+	workspace  *domain.Workspace
 	httpClient *http.Client
 }
 
-func NewHttpService(httpClient *http.Client) driving.HttpService {
+func NewHttpService(workspace *domain.Workspace, httpClient *http.Client) driving.HttpService {
 	return &httpService{
+		workspace:  workspace,
 		httpClient: httpClient,
 	}
 }
@@ -30,7 +34,14 @@ func (s *httpService) Execute(ctx context.Context, input *payload.HttpExecuteInp
 		requestBody = bytes.NewReader(input.Body)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, input.Method, input.URL, requestBody)
+	url := input.URL
+	if s.workspace != nil {
+		if !strings.Contains(url, "http") {
+			url = s.workspace.BaseURL + url
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, input.Method, url, requestBody)
 
 	if err != nil {
 		return nil, fmt.Errorf("error building request : %w", err)

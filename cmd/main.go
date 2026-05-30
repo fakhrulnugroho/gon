@@ -6,6 +6,7 @@ import (
 	"gon/internal/adapter/command"
 	"gon/internal/adapter/output"
 	"gon/internal/adapter/repository"
+	"gon/internal/core/domain"
 	"gon/internal/core/formatter"
 	"gon/internal/core/service"
 	"gon/internal/utility"
@@ -21,8 +22,8 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func cli_app() *cli.Command {
-	httpService := service.NewHttpService(&http.Client{Timeout: 30 * time.Second})
+func cli_app(workspace *domain.Workspace) *cli.Command {
+	httpService := service.NewHttpService(workspace, &http.Client{Timeout: 30 * time.Second})
 	jsonFormatter := formatter.NewJsonFormatter()
 	keyPairFormatter := formatter.NewKeyPairFormatter()
 	httpOutput := output.NewHttpOutput(jsonFormatter, keyPairFormatter)
@@ -113,7 +114,7 @@ func repl() {
 	fmt.Println("gon — An interactive HTTP client for terminal lovers")
 	fmt.Println("Type 'help' for available commands")
 
-	gon_app := cli_app()
+	gon_app := cli_app(workspace)
 
 	for {
 		line, err := rl.Readline()
@@ -148,7 +149,7 @@ func main() {
 	args := os.Args
 
 	if len(args) > 1 {
-		if err := cli_app().Run(context.Background(), args); err != nil {
+		if err := cli_app(nil).Run(context.Background(), args); err != nil {
 			fmt.Println(err)
 		}
 	} else {
