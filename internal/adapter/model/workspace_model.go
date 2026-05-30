@@ -15,3 +15,11 @@ func NewWorkspaceModelFromDomain(workspace domain.Workspace) *WorkspaceModel {
 		Config:  *NewConfigModelFromDomain(workspace.Config),
 	}
 }
+
+func (m *WorkspaceModel) ToDomain() *domain.Workspace {
+	return &domain.Workspace{
+		Name:    m.Name,
+		BaseURL: m.BaseURL,
+		Config:  m.Config.ToDomain(),
+	}
+}

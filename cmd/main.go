@@ -12,6 +12,7 @@ import (
 	"gon/internal/version"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -76,9 +77,28 @@ func cli_app() *cli.Command {
 }
 
 func repl() {
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println("errors ", err)
+		os.Exit(1)
+	}
+
+	workspaceRepository := repository.NewWorkspaceRepository()
+	workspace, err := workspaceRepository.Load(cwd)
+
+	prompt := utility.ColorInfo("gon> ")
+	historyFile := "/tmp/gon.history"
+
+	if workspace != nil {
+		prompt = utility.ColorInfo("gon(" + workspace.Name + ")> ")
+		cacheDirectory := filepath.Join(cwd, ".gon", "cache")
+		os.Mkdir(cacheDirectory, 0755)
+		historyFile = filepath.Join(cacheDirectory, workspace.Name+".history")
+	}
+
 	rl, err := readline.NewEx(&readline.Config{
-		Prompt:          utility.ColorInfo("gon> "),
-		HistoryFile:     "/tmp/gon.history",
+		Prompt:          prompt,
+		HistoryFile:     historyFile,
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
 	})

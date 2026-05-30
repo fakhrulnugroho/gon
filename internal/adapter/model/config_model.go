@@ -15,3 +15,11 @@ func NewConfigModelFromDomain(config domain.Config) *ConfigModel {
 		Headers: config.Headers,
 	}
 }
+
+func (m *ConfigModel) ToDomain() domain.Config {
+	return domain.Config{
+		Path:    m.Path,
+		Query:   m.Query,
+		Headers: m.Headers,
+	}
+}
