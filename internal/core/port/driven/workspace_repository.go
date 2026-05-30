@@ -1,8 +1,11 @@
 package driven
 
-import "gon/internal/core/domain"
+import (
+	"context"
+	"gon/internal/core/domain"
+)
 
 type WorkspaceRepository interface {
-	Save(directory string, workspace domain.Workspace) error
-	Load(directory string) (*domain.Workspace, error)
+	Save(ctx context.Context, directory string, workspace domain.Workspace) error
+	Load(ctx context.Context, directory string) (*domain.Workspace, error)
 }

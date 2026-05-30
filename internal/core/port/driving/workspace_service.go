@@ -1,5 +1,7 @@
 package driving
 
+import "context"
+
 type WorkspaceService interface {
-	Create(directory string) error
+	Create(ctx context.Context, directory string) error
 }

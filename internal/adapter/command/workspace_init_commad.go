@@ -18,7 +18,7 @@ func WorkspaceInitCommand(workspaceService driving.WorkspaceService) *cli.Comman
 			if err != nil {
 				return err
 			}
-			err = workspaceService.Create(cwd)
+			err = workspaceService.Create(ctx, cwd)
 			if err != nil {
 				return err
 			}

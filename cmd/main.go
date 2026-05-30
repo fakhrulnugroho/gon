@@ -84,7 +84,7 @@ func repl() {
 	}
 
 	workspaceRepository := repository.NewWorkspaceRepository()
-	workspace, err := workspaceRepository.Load(cwd)
+	workspace, err := workspaceRepository.Load(context.Background(), cwd)
 
 	prompt := utility.ColorInfo("gon> ")
 	historyFile := "/tmp/gon.history"
