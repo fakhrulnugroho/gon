@@ -5,6 +5,7 @@ import (
 	"gon/internal/core/domain"
 	"gon/internal/core/port/driven"
 	"gon/internal/core/port/driving"
+	"path/filepath"
 
 	"github.com/iancoleman/strcase"
 )
@@ -30,23 +31,5 @@ func getFolderName(directory string) string {
 	if directory == "" {
 		return ""
 	}
-
-	// hapus trailing '/'
-	for len(directory) > 1 && directory[len(directory)-1] == '/' {
-		directory = directory[:len(directory)-1]
-	}
-
-	lastSlash := -1
-	for i := len(directory) - 1; i >= 0; i-- {
-		if directory[i] == '/' {
-			lastSlash = i
-			break
-		}
-	}
-
-	if lastSlash == -1 {
-		return strcase.ToKebab(directory)
-	}
-
-	return strcase.ToKebab(directory[lastSlash+1:])
+	return strcase.ToKebab(filepath.Base(filepath.Clean(directory)))
 }
