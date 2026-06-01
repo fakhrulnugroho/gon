@@ -4,6 +4,7 @@ import (
 	"context"
 	"gon/internal/adapter/model"
 	"gon/internal/core/domain"
+	"gon/internal/core/port/driven"
 	"os"
 	"path/filepath"
 
@@ -13,7 +14,7 @@ import (
 type workspaceRepository struct {
 }
 
-func NewWorkspaceRepository() *workspaceRepository {
+func NewWorkspaceRepository() driven.WorkspaceRepository {
 	return &workspaceRepository{}
 }
 
