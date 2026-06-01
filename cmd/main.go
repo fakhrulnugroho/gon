@@ -77,6 +77,18 @@ func cli_app(workspace *domain.Workspace) *cli.Command {
 	}
 }
 
+type painter struct{}
+
+func (p *painter) Paint(line []rune, pos int) []rune {
+	input := string(line[:pos])
+	coloredInput := utility.ColorSuccess(input)
+	return []rune(coloredInput)
+}
+
+func NewPainter() readline.Painter {
+	return &painter{}
+}
+
 func repl() {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -102,6 +114,7 @@ func repl() {
 		HistoryFile:     historyFile,
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
+		Painter:         NewPainter(),
 	})
 
 	if err != nil {
