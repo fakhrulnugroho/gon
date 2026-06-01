@@ -2,6 +2,7 @@ package output
 
 import (
 	"fmt"
+	"gon/internal/core/enums"
 	"gon/internal/core/payload"
 	"gon/internal/core/port/driven"
 	"gon/internal/utility"
@@ -18,7 +19,7 @@ func NewHttpOutput(jsonFormatter driven.Formatter[[]byte], keyPairFormatter driv
 	return &httpOutput{jsonFormatter: jsonFormatter, keyPairFormatter: keyPairFormatter}
 }
 
-func (h *httpOutput) Format(input *payload.HttpExecuteInput, output *payload.HttpExecuteOutput, mode int) {
+func (h *httpOutput) Format(input *payload.HttpExecuteInput, output *payload.HttpExecuteOutput, mode enums.DisplayMode) {
 	fmt.Println()
 	if mode > 1 {
 		if input.URL != "" && input.Method != "" {

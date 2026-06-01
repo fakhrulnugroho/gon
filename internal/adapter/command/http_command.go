@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"gon/internal/core/enums"
 	"gon/internal/core/payload"
 	"gon/internal/core/port/driven"
 	"gon/internal/core/port/driving"
@@ -37,14 +38,14 @@ func parseQuery(query []string) map[string][]string {
 	return result
 }
 
-func resolveMode(cmd *cli.Command) int {
-	mode := 1
+func resolveMode(cmd *cli.Command) enums.DisplayMode {
+	mode := enums.DisplayModeNormal
 	if cmd.Bool("minimal") {
-		mode = 0
+		mode = enums.DisplayModeMinimal
 	} else if cmd.Bool("normal") {
-		mode = 1
+		mode = enums.DisplayModeNormal
 	} else if cmd.Bool("full") {
-		mode = 2
+		mode = enums.DisplayModeFull
 	}
 	return mode
 }
@@ -88,7 +89,7 @@ func HttpCommand(method string, httpService driving.HttpService, httpOutput driv
 			if err != nil {
 				return err
 			}
-			httpOutput.Format(input, result, mode)
+			httpOutput.Format(input, result, (mode))
 			return nil
 		},
 		Flags: []cli.Flag{
