@@ -9,7 +9,6 @@ import (
 	"gon/internal/core/port/driving"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -36,9 +35,7 @@ func (s *httpService) Execute(ctx context.Context, input *payload.HttpExecuteInp
 
 	url := input.URL
 	if s.workspace != nil {
-		if !strings.Contains(url, "http") {
-			url = s.workspace.BaseURL + url
-		}
+		url = s.workspace.ResolveURL(url)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, input.Method, url, requestBody)
