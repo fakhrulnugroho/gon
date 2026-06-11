@@ -15,7 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/chzyer/readline"
 	"github.com/mattn/go-shellwords"
@@ -23,7 +22,7 @@ import (
 )
 
 func cli_app(workspace *domain.Workspace) *cli.Command {
-	httpService := service.NewHttpService(workspace, &http.Client{Timeout: 30 * time.Second})
+	httpService := service.NewHttpService(workspace, &http.Client{})
 	jsonFormatter := formatter.NewJsonFormatter()
 	keyPairFormatter := formatter.NewKeyPairFormatter()
 	httpOutput := output.NewHttpOutput(jsonFormatter, keyPairFormatter)
@@ -89,6 +88,13 @@ func NewPainter() readline.Painter {
 	return &painter{}
 }
 
+// loadWorkspace loads the workspace for the given directory, degrading gracefully
+// to nil when no workspace is present (matching the REPL's original behavior).
+func loadWorkspace(cwd string) *domain.Workspace {
+	workspace, _ := repository.NewWorkspaceRepository().Load(context.Background(), cwd)
+	return workspace
+}
+
 func repl() {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -96,8 +102,7 @@ func repl() {
 		os.Exit(1)
 	}
 
-	workspaceRepository := repository.NewWorkspaceRepository()
-	workspace, err := workspaceRepository.Load(context.Background(), cwd)
+	workspace := loadWorkspace(cwd)
 
 	prompt := utility.ColorInfo("gon> ")
 	historyFile := "/tmp/gon.history"
@@ -162,7 +167,8 @@ func main() {
 	args := os.Args
 
 	if len(args) > 1 {
-		if err := cli_app(nil).Run(context.Background(), args); err != nil {
+		cwd, _ := os.Getwd()
+		if err := cli_app(loadWorkspace(cwd)).Run(context.Background(), args); err != nil {
 			fmt.Println(err)
 		}
 	} else {

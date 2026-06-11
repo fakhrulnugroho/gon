@@ -21,7 +21,7 @@ func NewHttpOutput(jsonFormatter driven.Formatter[[]byte], keyPairFormatter driv
 
 func (h *httpOutput) Format(input *payload.HttpExecuteInput, output *payload.HttpExecuteOutput, mode enums.DisplayMode) {
 	fmt.Println()
-	if mode > 1 {
+	if mode >= enums.DisplayModeFull {
 		if input.URL != "" && input.Method != "" {
 			fmt.Println(utility.ColorInfo(input.Method), utility.ColorSecondary(input.URL))
 		}
@@ -42,7 +42,7 @@ func (h *httpOutput) Format(input *payload.HttpExecuteInput, output *payload.Htt
 		fmt.Println()
 	}
 
-	if mode > 0 {
+	if mode >= enums.DisplayModeNormal {
 		headers := make(map[string]string)
 		for k, v := range output.Headers {
 			if len(v) == 0 {

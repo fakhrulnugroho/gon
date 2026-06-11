@@ -2,40 +2,48 @@ package command
 
 import (
 	"context"
+	"fmt"
 	"gon/internal/core/enums"
 	"gon/internal/core/payload"
 	"gon/internal/core/port/driven"
 	"gon/internal/core/port/driving"
+	"net/textproto"
 	"strings"
 	"time"
 
 	"github.com/urfave/cli/v3"
 )
 
-func parseHeaders(headers []string) map[string][]string {
+func parseHeaders(headers []string) (map[string][]string, error) {
 	result := make(map[string][]string)
 	for _, h := range headers {
 		parts := strings.SplitN(h, ":", 2)
-		if len(parts) == 2 {
-			key := strings.TrimSpace(parts[0])
-			val := strings.TrimSpace(parts[1])
-			result[key] = append(result[key], val)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid header %q: expected \"Key: Value\" format", h)
 		}
+		key := textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(parts[0]))
+		if key == "" {
+			return nil, fmt.Errorf("invalid header %q: empty key", h)
+		}
+		result[key] = append(result[key], strings.TrimSpace(parts[1]))
 	}
-	return result
+	return result, nil
 }
 
-func parseQuery(query []string) map[string][]string {
+func parseQuery(query []string) (map[string][]string, error) {
 	result := make(map[string][]string)
 	for _, q := range query {
 		parts := strings.SplitN(q, "=", 2)
-		if len(parts) == 2 {
-			key := strings.TrimSpace(parts[0])
-			val := strings.TrimSpace(parts[1])
-			result[key] = append(result[key], val)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid query %q: expected \"Key=Value\" format", q)
 		}
+		key := strings.TrimSpace(parts[0])
+		if key == "" {
+			return nil, fmt.Errorf("invalid query %q: empty key", q)
+		}
+		result[key] = append(result[key], strings.TrimSpace(parts[1]))
 	}
-	return result
+	return result, nil
 }
 
 func resolveMode(cmd *cli.Command) enums.DisplayMode {
@@ -62,8 +70,14 @@ func HttpCommand(method string, httpService driving.HttpService, httpOutput driv
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			headers := parseHeaders(cmd.StringSlice("header"))
-			query := parseQuery(cmd.StringSlice("query"))
+			headers, err := parseHeaders(cmd.StringSlice("header"))
+			if err != nil {
+				return err
+			}
+			query, err := parseQuery(cmd.StringSlice("query"))
+			if err != nil {
+				return err
+			}
 
 			input := &payload.HttpExecuteInput{
 				Method:  strings.ToUpper(method),
@@ -80,7 +94,9 @@ func HttpCommand(method string, httpService driving.HttpService, httpOutput driv
 
 			if cmd.String("json") != "" {
 				input.Body = []byte(cmd.String("json"))
-				headers["Content-Type"] = append(headers["Content-Type"], "application/json")
+				if _, ok := headers["Content-Type"]; !ok {
+					headers["Content-Type"] = append(headers["Content-Type"], "application/json")
+				}
 			}
 
 			mode := resolveMode(cmd)

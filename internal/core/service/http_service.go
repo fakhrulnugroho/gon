@@ -44,7 +44,11 @@ func (s *httpService) Execute(ctx context.Context, input *payload.HttpExecuteInp
 		return nil, fmt.Errorf("error building request : %w", err)
 	}
 
-	req.Header = input.Headers
+	for key, values := range input.Headers {
+		for _, value := range values {
+			req.Header.Add(key, value)
+		}
+	}
 
 	if len(input.Query) > 0 {
 		q := req.URL.Query()

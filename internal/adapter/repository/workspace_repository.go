@@ -24,8 +24,12 @@ func (r *workspaceRepository) Save(ctx context.Context, directory string, worksp
 		return err
 	}
 	gonDirectory := filepath.Join(directory, ".gon")
-	os.Mkdir(gonDirectory, 0755)
-	os.WriteFile(filepath.Join(gonDirectory, "workspace.yaml"), data, 0755)
+	if err := os.MkdirAll(gonDirectory, 0755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(gonDirectory, "workspace.yaml"), data, 0644); err != nil {
+		return err
+	}
 	return nil
 }
 
