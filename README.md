@@ -11,6 +11,7 @@ An interactive HTTP client for terminal lovers.
 - HTTP methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`
 - Custom request headers via `--header`
 - JSON request body via `--json`
+- Workspaces — a project base URL plus default headers, query params, and base path applied to every request
 - Color-coded HTTP status codes and execution time
 - Syntax-highlighted, pretty-printed JSON responses
 
@@ -92,6 +93,12 @@ patch  <url> [options]    Send an HTTP PATCH request
 delete <url> [options]    Send an HTTP DELETE request
 ```
 
+### Workspace Commands
+
+```
+workspace init    Create a .gon/workspace.yaml in the current directory
+```
+
 ### Common Commands
 
 ```
@@ -164,6 +171,42 @@ gon> delete https://api.example.com/users/42
 ```bash
 gon post https://api.example.com/login --json '{"username":"admin","password":"secret"}'
 ```
+
+---
+
+## Workspaces
+
+Run `gon workspace init` in a project directory to create a `.gon/workspace.yaml`.
+A workspace gives every request a base URL plus defaults that are applied
+automatically — so you don't repeat the same host, auth header, or query string on
+every call.
+
+```yaml
+name: my-project
+base_url: https://api.example.com
+config:
+  path: /v1
+  headers:
+    Authorization: Bearer my-token
+  query:
+    api_key: abc123
+```
+
+With the workspace above, a relative request:
+
+```
+gon> get /users
+```
+
+is sent to `https://api.example.com/v1/users` with the `Authorization` header and
+`api_key` query parameter already attached.
+
+- **Relative URLs** resolve to `base_url` + `config.path` + the request path.
+  Absolute `http(s)://` URLs are used as-is and ignore the workspace.
+- **Defaults are overridable** — a per-request `--header` or `--query` for the same
+  key wins over the workspace default; the default is dropped, not duplicated.
+- When you're inside a workspace the REPL prompt shows its name, e.g.
+  `gon(my-project)>`, and command history is kept per-workspace under `.gon/cache/`.
 
 ---
 

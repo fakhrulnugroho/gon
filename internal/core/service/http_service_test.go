@@ -77,6 +77,62 @@ func TestHttpServiceExecuteAbsoluteURLBypassesWorkspace(t *testing.T) {
 	assert.True(t, hit)
 }
 
+func TestHttpServiceExecuteAppliesWorkspaceDefaults(t *testing.T) {
+	var gotHeader, gotQuery, gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeader = r.Header.Get("Authorization")
+		gotQuery = r.URL.Query().Get("debug")
+		gotPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	ws := &domain.Workspace{
+		BaseURL: server.URL,
+		Config: domain.Config{
+			Path:    "/v1",
+			Headers: map[string]string{"Authorization": "Bearer default"},
+			Query:   map[string]string{"debug": "1"},
+		},
+	}
+	svc := NewHttpService(ws, server.Client())
+
+	input := &payload.HttpExecuteInput{Method: http.MethodGet, URL: "/users"}
+	_, err := svc.Execute(context.Background(), input)
+
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer default", gotHeader)
+	assert.Equal(t, "1", gotQuery)
+	assert.Equal(t, "/v1/users", gotPath)
+	// input is mutated so --full output echoes the merged request.
+	assert.Equal(t, []string{"Bearer default"}, input.Headers["Authorization"])
+	assert.Equal(t, []string{"1"}, input.Query["debug"])
+}
+
+func TestHttpServiceExecuteRequestOverridesWorkspaceDefaults(t *testing.T) {
+	var gotHeaders []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeaders = r.Header.Values("Authorization")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	ws := &domain.Workspace{
+		BaseURL: server.URL,
+		Config:  domain.Config{Headers: map[string]string{"Authorization": "Bearer default"}},
+	}
+	svc := NewHttpService(ws, server.Client())
+
+	_, err := svc.Execute(context.Background(), &payload.HttpExecuteInput{
+		Method:  http.MethodGet,
+		URL:     "/",
+		Headers: map[string][]string{"Authorization": {"Bearer override"}},
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, []string{"Bearer override"}, gotHeaders)
+}
+
 func TestHttpServiceExecuteForwardsHeaders(t *testing.T) {
 	var gotHeader string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

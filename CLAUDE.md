@@ -59,6 +59,8 @@ internal/
 
 `gon workspace init` creates `.gon/workspace.yaml` in the current directory. The workspace name is derived from the folder name (converted to kebab-case). The YAML is written via `WorkspaceRepository` (adapter/repository) using `WorkspaceModel` (adapter/model) as the serialization layer — domain structs are never marshalled directly.
 
+The workspace `Config` (default `headers`, `query`, and base `path`) is applied to every request by `Workspace.ApplyDefaults` (domain), called from `HttpService.Execute`. `ResolveURL` resolves a relative request URL to `BaseURL + Config.Path + path`; absolute `http(s)://` URLs bypass it. Per-request `--header`/`--query` flags take precedence over the workspace defaults (the default for a colliding key is dropped, not duplicated). Because `ApplyDefaults` mutates the shared `HttpExecuteInput`, the `--full` display echoes the merged request.
+
 ### Adding a new command
 
 1. Define domain entities in `internal/core/domain/` if new data types are needed.

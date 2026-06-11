@@ -35,6 +35,7 @@ func (s *httpService) Execute(ctx context.Context, input *payload.HttpExecuteInp
 
 	url := input.URL
 	if s.workspace != nil {
+		s.workspace.ApplyDefaults(input)
 		url = s.workspace.ResolveURL(url)
 	}
 
