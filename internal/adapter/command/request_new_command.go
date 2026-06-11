@@ -27,18 +27,18 @@ func RequestNewCommand(requestService driving.RequestService) *cli.Command {
 					&cli.StringFlag{Name: "method", Value: "GET", Usage: "HTTP method for the new request"},
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					path := cmd.StringArg("path")
-					if path == "" {
+					requestPath := cmd.StringArg("path")
+					if requestPath == "" {
 						return fmt.Errorf("request path is required")
 					}
 					cwd, err := os.Getwd()
 					if err != nil {
 						return err
 					}
-					if err := requestService.Create(ctx, cwd, path, cmd.String("method")); err != nil {
+					if err := requestService.Create(ctx, cwd, requestPath, cmd.String("method")); err != nil {
 						return err
 					}
-					fmt.Printf("Request '%s' created\n", path)
+					fmt.Printf("Request '%s' created\n", requestPath)
 					return nil
 				},
 			},

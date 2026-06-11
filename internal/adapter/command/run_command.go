@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -21,6 +22,9 @@ func RunCommand(requestService driving.RequestService, httpOutput driven.HttpOut
 			&cli.StringArg{Name: "path", UsageText: "Path to the saved request, e.g. auth/login"},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			if cmd.StringArg("path") == "" {
+				return fmt.Errorf("request path is required")
+			}
 			headers, err := parseHeaders(cmd.StringSlice("header"))
 			if err != nil {
 				return err
