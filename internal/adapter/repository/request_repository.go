@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,22 +25,27 @@ func NewRequestRepository() driven.RequestRepository {
 }
 
 // resolveFile returns the on-disk path of a request file, trying .yml then
-// .yaml. It returns ok=false when neither exists.
-func resolveFile(root, requestPath string) (string, bool) {
+// .yaml. It returns ok=false when neither exists. Any stat error other than
+// ErrNotExist is propagated.
+func resolveFile(root, requestPath string) (string, bool, error) {
 	clean := filepath.Clean(requestPath)
-	for _, ext := range []string{".yml", ".yaml"} {
-		candidate := filepath.Join(root, clean) + ext
-		if hasExtension(clean) {
-			candidate = filepath.Join(root, clean)
+	candidates := []string{
+		filepath.Join(root, clean) + ".yml",
+		filepath.Join(root, clean) + ".yaml",
+	}
+	if hasExtension(clean) {
+		candidates = []string{filepath.Join(root, clean)}
+	}
+	for _, candidate := range candidates {
+		_, err := os.Stat(candidate)
+		if err == nil {
+			return candidate, true, nil
 		}
-		if _, err := os.Stat(candidate); err == nil {
-			return candidate, true
-		}
-		if hasExtension(clean) {
-			break
+		if !errors.Is(err, fs.ErrNotExist) {
+			return "", false, err
 		}
 	}
-	return "", false
+	return "", false, nil
 }
 
 func hasExtension(path string) bool {
@@ -49,11 +56,14 @@ func hasExtension(path string) bool {
 func (r *requestRepository) Load(ctx context.Context, root string, requestPath string) (*domain.Request, []domain.Collection, error) {
 	clean := filepath.Clean(requestPath)
 	base := strings.TrimSuffix(filepath.Base(clean), filepath.Ext(clean))
-	if base == "collection" {
+	if strings.EqualFold(base, "collection") {
 		return nil, nil, fmt.Errorf("%q is a reserved collection file, not a request", requestPath)
 	}
 
-	file, ok := resolveFile(root, requestPath)
+	file, ok, err := resolveFile(root, requestPath)
+	if err != nil {
+		return nil, nil, err
+	}
 	if !ok {
 		return nil, nil, fmt.Errorf("request not found: %s", requestPath)
 	}
@@ -93,7 +103,12 @@ func loadCollectionChain(root, dir string) ([]domain.Collection, error) {
 	var collections []domain.Collection
 	for {
 		file := filepath.Join(current, collectionFileName)
-		if data, err := os.ReadFile(file); err == nil {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			if !errors.Is(err, fs.ErrNotExist) {
+				return nil, fmt.Errorf("reading %s: %w", file, err)
+			}
+		} else {
 			var collectionModel model.CollectionModel
 			if err := yaml.Unmarshal(data, &collectionModel); err != nil {
 				return nil, fmt.Errorf("error parsing %s: %w", file, err)
@@ -129,6 +144,6 @@ func (r *requestRepository) Save(ctx context.Context, root string, requestPath s
 }
 
 func (r *requestRepository) Exists(ctx context.Context, root string, requestPath string) (bool, error) {
-	_, ok := resolveFile(root, requestPath)
-	return ok, nil
+	_, ok, err := resolveFile(root, requestPath)
+	return ok, err
 }

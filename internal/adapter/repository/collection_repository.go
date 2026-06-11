@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -32,8 +34,11 @@ func (r *collectionRepository) Save(ctx context.Context, root string, collection
 
 func (r *collectionRepository) Exists(ctx context.Context, root string, collectionPath string) (bool, error) {
 	file := filepath.Join(root, filepath.Clean(collectionPath), collectionFileName)
-	if _, err := os.Stat(file); err == nil {
-		return true, nil
+	if _, err := os.Stat(file); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return false, nil
+		}
+		return false, err
 	}
-	return false, nil
+	return true, nil
 }

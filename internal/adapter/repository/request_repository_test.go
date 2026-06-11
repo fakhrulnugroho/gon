@@ -59,7 +59,6 @@ func TestRequestRepositorySaveAndExists(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, exists)
 
-	require.NoError(t, os.MkdirAll(filepath.Join(root, "auth"), 0755))
 	err = repo.Save(context.Background(), root, "auth/login", domainGetRequest())
 	require.NoError(t, err)
 
@@ -69,6 +68,16 @@ func TestRequestRepositorySaveAndExists(t *testing.T) {
 
 	_, err = os.Stat(filepath.Join(root, "auth", "login.yml"))
 	require.NoError(t, err)
+}
+
+func TestRequestRepositoryLoadYamlExtension(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "ping.yaml"), "method: get\nurl: /ping\n")
+	repo := NewRequestRepository()
+	req, _, err := repo.Load(context.Background(), root, "ping")
+	require.NoError(t, err)
+	assert.Equal(t, "GET", req.Method)
+	assert.Equal(t, "/ping", req.URL)
 }
 
 func domainGetRequest() domain.Request {
