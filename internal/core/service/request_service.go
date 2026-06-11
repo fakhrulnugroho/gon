@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"net/textproto"
 	"path"
 	"strings"
 
@@ -65,7 +66,7 @@ func applyOverrides(input *payload.HttpExecuteInput, overrides *payload.HttpExec
 		input.Headers = make(map[string][]string)
 	}
 	for key, values := range overrides.Headers {
-		input.Headers[key] = values
+		input.Headers[textproto.CanonicalMIMEHeaderKey(key)] = values
 	}
 	if input.Query == nil {
 		input.Query = make(map[string][]string)
@@ -116,7 +117,9 @@ func (s *requestService) Create(ctx context.Context, root string, requestPath st
 		}
 	}
 
-	name := strcase.ToKebab(strings.TrimSuffix(path.Base(filepath_ToSlash(requestPath)), ".yml"))
+	base := path.Base(filepath_ToSlash(requestPath))
+	base = strings.TrimSuffix(strings.TrimSuffix(base, ".yaml"), ".yml")
+	name := strcase.ToKebab(base)
 	request := domain.Request{
 		Name:   name,
 		Method: strings.ToUpper(method),
