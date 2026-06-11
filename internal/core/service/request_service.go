@@ -33,15 +33,15 @@ func NewRequestService(
 	}
 }
 
-func (s *requestService) Run(ctx context.Context, root string, requestPath string, overrides *payload.HttpExecuteInput) (*payload.HttpExecuteOutput, error) {
+func (s *requestService) Run(ctx context.Context, root string, requestPath string, overrides *payload.HttpExecuteInput) (*payload.HttpExecuteInput, *payload.HttpExecuteOutput, error) {
 	request, collections, err := s.requestRepository.Load(ctx, root, requestPath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	input, err := request.ToInput()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	applyOverrides(input, overrides)
@@ -53,7 +53,8 @@ func (s *requestService) Run(ctx context.Context, root string, requestPath strin
 
 	input.URL = prefixCollectionPaths(input.URL, collections)
 
-	return s.httpService.Execute(ctx, input)
+	result, err := s.httpService.Execute(ctx, input)
+	return input, result, err
 }
 
 // applyOverrides copies per-execution values onto input, replacing existing

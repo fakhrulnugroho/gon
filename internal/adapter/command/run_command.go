@@ -53,11 +53,11 @@ func RunCommand(requestService driving.RequestService, httpOutput driven.HttpOut
 				return err
 			}
 
-			result, err := requestService.Run(ctx, cwd, cmd.StringArg("path"), overrides)
+			merged, result, err := requestService.Run(ctx, cwd, cmd.StringArg("path"), overrides)
 			if err != nil {
 				return err
 			}
-			httpOutput.Format(overrides, result, resolveMode(cmd))
+			httpOutput.Format(merged, result, resolveMode(cmd))
 			return nil
 		},
 		Flags: []cli.Flag{

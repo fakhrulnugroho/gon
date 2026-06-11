@@ -55,7 +55,7 @@ func TestRequestServiceRun(t *testing.T) {
 		svc := NewRequestService(repo, nil, http)
 
 		overrides := &payload.HttpExecuteInput{Headers: map[string][]string{"X-Inner": {"override"}}}
-		_, err := svc.Run(context.Background(), "/root", "auth/admin/impersonate", overrides)
+		_, _, err := svc.Run(context.Background(), "/root", "auth/admin/impersonate", overrides)
 
 		require.NoError(t, err)
 		got := http.input
@@ -77,7 +77,7 @@ func TestRequestServiceRun(t *testing.T) {
 		http := &captureHttpService{}
 		svc := NewRequestService(repo, nil, http)
 
-		_, err := svc.Run(context.Background(), "/root", "auth/x", nil)
+		_, _, err := svc.Run(context.Background(), "/root", "auth/x", nil)
 
 		require.NoError(t, err)
 		assert.Equal(t, "https://other.com/x", http.input.URL)
