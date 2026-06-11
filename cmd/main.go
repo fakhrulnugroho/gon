@@ -30,6 +30,11 @@ func cli_app(workspace *domain.Workspace) *cli.Command {
 	workspaceRepository := repository.NewWorkspaceRepository()
 	workspaceService := service.NewWorkspaceService(workspaceRepository)
 
+	requestRepository := repository.NewRequestRepository()
+	collectionRepository := repository.NewCollectionRepository()
+	requestService := service.NewRequestService(requestRepository, collectionRepository, httpService)
+	collectionService := service.NewCollectionService(collectionRepository)
+
 	httpCommands := []*cli.Command{
 		command.HttpCommand(strings.ToLower(http.MethodGet), httpService, httpOutput),
 		command.HttpCommand(strings.ToLower(http.MethodPost), httpService, httpOutput),
@@ -45,17 +50,25 @@ func cli_app(workspace *domain.Workspace) *cli.Command {
 		command.WorkspaceInitCommand(workspaceService),
 	}
 
+	collectionCommands := []*cli.Command{
+		command.RunCommand(requestService, httpOutput),
+		command.CollectionInitCommand(collectionService),
+		command.RequestNewCommand(requestService),
+	}
+
 	groups := []command.CommandGroup{
 		{Name: "HTTP Commands", Commands: httpCommands},
 		{Name: "Workspace", Commands: workspaceCommands},
+		{Name: "Collections", Commands: collectionCommands},
 		{Name: "Common", Commands: utilityCommands},
 	}
 
 	helpCmd := command.HelpCommand(groups)
 	utilityCommands = append(utilityCommands, helpCmd)
-	groups[2].Commands = utilityCommands
+	groups[3].Commands = utilityCommands
 
 	commands := append(httpCommands, workspaceCommands...)
+	commands = append(commands, collectionCommands...)
 	commands = append(commands, utilityCommands...)
 	return &cli.Command{
 		Name:            "gon",
