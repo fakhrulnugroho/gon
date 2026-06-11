@@ -81,3 +81,15 @@ func TestRequestServiceRun(t *testing.T) {
 		assert.Equal(t, "https://other.com/x", http.input.URL)
 	})
 }
+
+func TestRequestServiceCreate(t *testing.T) {
+	repo := &fakeRequestRepo{}
+	collections := &recordingCollectionRepo{}
+	svc := NewRequestService(repo, collections, nil)
+
+	err := svc.Create(context.Background(), "/root", "auth/login", "post")
+
+	require.NoError(t, err)
+	// parent collection auth had to be created
+	assert.Equal(t, []string{"auth"}, collections.saved)
+}
