@@ -103,21 +103,14 @@ func (s *requestService) Create(ctx context.Context, root string, requestPath st
 	}
 
 	// Ensure the parent folder is a collection.
-	parent := path.Dir(filepath_ToSlash(requestPath))
+	parent := path.Dir(toSlash(requestPath))
 	if parent != "." && parent != "" {
-		ok, err := s.collectionRepository.Exists(ctx, root, parent)
-		if err != nil {
+		if err := s.ensureCollections(ctx, root, parent); err != nil {
 			return err
-		}
-		if !ok {
-			name := strcase.ToKebab(path.Base(parent))
-			if err := s.collectionRepository.Save(ctx, root, parent, domain.Collection{Name: name}); err != nil {
-				return err
-			}
 		}
 	}
 
-	base := path.Base(filepath_ToSlash(requestPath))
+	base := path.Base(toSlash(requestPath))
 	base = strings.TrimSuffix(strings.TrimSuffix(base, ".yaml"), ".yml")
 	name := strcase.ToKebab(base)
 	request := domain.Request{
@@ -128,8 +121,24 @@ func (s *requestService) Create(ctx context.Context, root string, requestPath st
 	return s.requestRepository.Save(ctx, root, requestPath, request)
 }
 
-// filepath_ToSlash normalizes OS separators to forward slashes so path.Dir /
-// path.Base behave consistently regardless of platform.
-func filepath_ToSlash(p string) string {
-	return strings.ReplaceAll(p, "\\", "/")
+// ensureCollections makes sure every folder along collectionPath has a
+// collection.yml, creating any that are missing. It is idempotent — existing
+// collections are left untouched.
+func (s *requestService) ensureCollections(ctx context.Context, root, collectionPath string) error {
+	segments := strings.Split(strings.Trim(collectionPath, "/"), "/")
+	for i := range segments {
+		sub := strings.Join(segments[:i+1], "/")
+		exists, err := s.collectionRepository.Exists(ctx, root, sub)
+		if err != nil {
+			return err
+		}
+		if exists {
+			continue
+		}
+		name := strcase.ToKebab(path.Base(sub))
+		if err := s.collectionRepository.Save(ctx, root, sub, domain.Collection{Name: name}); err != nil {
+			return err
+		}
+	}
+	return nil
 }

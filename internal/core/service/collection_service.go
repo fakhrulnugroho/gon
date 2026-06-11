@@ -22,7 +22,7 @@ func NewCollectionService(collectionRepository driven.CollectionRepository) driv
 }
 
 func (s *collectionService) Create(ctx context.Context, root string, collectionPath string) error {
-	normalized := strings.Trim(filepath_ToSlash(collectionPath), "/")
+	normalized := strings.Trim(toSlash(collectionPath), "/")
 	if normalized == "" {
 		return fmt.Errorf("collection path is required")
 	}

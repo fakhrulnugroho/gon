@@ -48,4 +48,14 @@ func TestCollectionServiceCreate(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "already exists")
 	})
+
+	t.Run("skips existing ancestor and creates target", func(t *testing.T) {
+		repo := &recordingCollectionRepo{existing: map[string]bool{"auth": true}}
+		svc := NewCollectionService(repo)
+
+		err := svc.Create(context.Background(), "/root", "auth/admin")
+
+		require.NoError(t, err)
+		assert.Equal(t, []string{"auth/admin"}, repo.saved)
+	})
 }

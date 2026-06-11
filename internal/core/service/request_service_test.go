@@ -11,10 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// fakeRequestRepo returns canned request + collections and records nothing else.
+// fakeRequestRepo returns canned request + collections and records Save calls.
 type fakeRequestRepo struct {
 	request     domain.Request
 	collections []domain.Collection
+	saved       []string
 }
 
 func (f *fakeRequestRepo) Load(ctx context.Context, root, requestPath string) (*domain.Request, []domain.Collection, error) {
@@ -22,6 +23,7 @@ func (f *fakeRequestRepo) Load(ctx context.Context, root, requestPath string) (*
 	return &r, f.collections, nil
 }
 func (f *fakeRequestRepo) Save(ctx context.Context, root, requestPath string, request domain.Request) error {
+	f.saved = append(f.saved, requestPath)
 	return nil
 }
 func (f *fakeRequestRepo) Exists(ctx context.Context, root, requestPath string) (bool, error) {
@@ -92,4 +94,5 @@ func TestRequestServiceCreate(t *testing.T) {
 	require.NoError(t, err)
 	// parent collection auth had to be created
 	assert.Equal(t, []string{"auth"}, collections.saved)
+	assert.Len(t, repo.saved, 1)
 }
