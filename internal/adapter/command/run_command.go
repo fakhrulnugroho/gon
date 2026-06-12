@@ -49,21 +49,21 @@ func RunCommand(requestService driving.RequestService, environmentService drivin
 			}
 
 			cwd, err := os.Getwd()
-				if err != nil {
-					return err
-				}
+			if err != nil {
+				return err
+			}
 
-				env, err := environmentService.Resolve(ctx, cwd, cmd.String("env"))
-				if err != nil {
-					return err
-				}
+			env, err := environmentService.Resolve(ctx, cwd, cmd.String("env"))
+			if err != nil {
+				return err
+			}
 
-				merged, result, err := requestService.Run(ctx, cwd, cmd.StringArg("path"), overrides, env)
-				if err != nil {
-					return err
-				}
-				httpOutput.Format(merged, result, resolveMode(cmd))
-				return nil
+			merged, result, err := requestService.Run(ctx, cwd, cmd.StringArg("path"), overrides, env)
+			if err != nil {
+				return err
+			}
+			httpOutput.Format(merged, result, resolveMode(cmd))
+			return nil
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "env", Usage: "Environment to use for this request (overrides the active one)"},

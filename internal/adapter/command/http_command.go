@@ -101,17 +101,17 @@ func HttpCommand(method string, httpService driving.HttpService, environmentServ
 			}
 
 			cwd, err := os.Getwd()
-				if err != nil {
-					return err
-				}
-				env, err := environmentService.Resolve(ctx, cwd, cmd.String("env"))
-				if err != nil {
-					return err
-				}
+			if err != nil {
+				return err
+			}
+			env, err := environmentService.Resolve(ctx, cwd, cmd.String("env"))
+			if err != nil {
+				return err
+			}
 
-				mode := resolveMode(cmd)
+			mode := resolveMode(cmd)
 
-				result, err := httpService.Execute(ctx, input, env)
+			result, err := httpService.Execute(ctx, input, env)
 			if err != nil {
 				return err
 			}

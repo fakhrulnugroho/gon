@@ -37,7 +37,10 @@ func (s *workspaceService) Create(ctx context.Context, directory string) error {
 	if err := s.environmentRepository.Save(ctx, directory, local); err != nil {
 		return err
 	}
-	return s.environmentRepository.WriteActive(ctx, directory, "local")
+	if err := s.environmentRepository.WriteActive(ctx, directory, "local"); err != nil {
+		return err
+	}
+	return s.workspaceRepository.EnsureGitignore(ctx, directory, []string{".gon/", ".cache/"})
 }
 
 // ensureWorkspace guards collection/request operations: they only make sense

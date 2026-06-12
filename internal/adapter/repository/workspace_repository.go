@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -61,4 +62,40 @@ func (r *workspaceRepository) Exists(ctx context.Context, directory string) (boo
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *workspaceRepository) EnsureGitignore(ctx context.Context, directory string, entries []string) error {
+	path := filepath.Join(directory, ".gitignore")
+
+	existing := map[string]bool{}
+	var current []byte
+	if data, err := os.ReadFile(path); err == nil {
+		current = data
+		for _, line := range strings.Split(string(data), "\n") {
+			existing[strings.TrimSpace(line)] = true
+		}
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+
+	var toAdd []string
+	for _, entry := range entries {
+		if !existing[entry] {
+			toAdd = append(toAdd, entry)
+		}
+	}
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	var buf strings.Builder
+	buf.Write(current)
+	if len(current) > 0 && !strings.HasSuffix(string(current), "\n") {
+		buf.WriteString("\n")
+	}
+	for _, entry := range toAdd {
+		buf.WriteString(entry)
+		buf.WriteString("\n")
+	}
+	return os.WriteFile(path, []byte(buf.String()), 0644)
 }
