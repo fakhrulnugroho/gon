@@ -69,7 +69,7 @@ All three operations — `collection init`, `request new`, and `run` — require
 
 ### Environments
 
-`domain.Environment` holds `Name`, `BaseURL`, and `Variables` (a `map[string]string`). It exposes `Substitute(s string) (string, error)` (replaces all `{{name}}` placeholders, returns an error listing any unresolved names) and `FindPlaceholders(s string) []string`. A `ResolveURL` free function in `domain` resolves a relative URL against the environment's `base_url` (mirroring `Workspace.ResolveURL`).
+`domain.Environment` holds `Name`, `BaseURL`, and `Variables` (a `map[string]string`). It exposes `Substitute(s string) string` (replaces every `{{name}}` placeholder it knows; unknown placeholders are left intact so callers can detect them — a nil `*Environment` returns the input unchanged) and `FindPlaceholders(s string) []string` (returns the names of any remaining `{{name}}` placeholders). A `ResolveURL(baseURL, configPath, requestPath string)` free function in `domain` resolves a relative URL against a base URL and config path; `Workspace.ResolveURL` delegates to it. Fail-fast on unresolved variables is the HTTP service's responsibility, not `Substitute`'s: after substitution it collects leftover placeholders via `FindPlaceholders` and errors before the request is sent.
 
 Storage: each environment lives in `environments/<name>.yml` at the workspace root, written and read through `EnvironmentRepository` (adapter/repository) using `EnvironmentModel` (adapter/model) as the serialization layer. The per-developer active selection is persisted in `.gon/active-env` (gitignored) via `ReadActive`/`WriteActive` on the repository — not in `workspace.yml`.
 
