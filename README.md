@@ -6,12 +6,15 @@ An interactive HTTP client for terminal lovers.
 
 ## Features
 
-- Interactive REPL with command history
+- Interactive REPL with per-workspace command history
 - One-shot mode for scripting and quick use
 - HTTP methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`
-- Custom request headers via `--header`
+- Custom request headers via `--header` and query params via `--query`
 - JSON request body via `--json`
+- Selectable output verbosity: `--minimal`, `--normal`, `--full`
+- Per-request `--timeout`
 - Workspaces — a project base URL plus default headers, query params, and base path applied to every request
+- Collections & saved requests — store requests as YAML files, organize them in nested folders, and run them by path with hierarchical config defaults
 - Color-coded HTTP status codes and execution time
 - Syntax-highlighted, pretty-printed JSON responses
 
@@ -99,6 +102,14 @@ delete <url> [options]    Send an HTTP DELETE request
 workspace init    Create a .gon/workspace.yaml in the current directory
 ```
 
+### Collection Commands
+
+```
+run        <path> [options]    Run a saved request by path (e.g. run auth/login)
+collection init <name>         Create a collection folder (nesting allowed, e.g. auth/admin)
+request    new <path> [--method]  Scaffold a new request file (e.g. request new auth/login --method POST)
+```
+
 ### Common Commands
 
 ```
@@ -112,22 +123,31 @@ exit      Exit the application
 
 ## Options
 
-Options are appended after the URL and can be combined freely.
+Options are appended after the URL and can be combined freely. They apply to the
+HTTP commands (`get`, `post`, …) and to `run`.
 
-### `--header <key> <value>`
+### `--header "Key: Value"`
 
-Add a custom request header.
+Add a custom request header in `"Key: Value"` format.
 
 ```bash
-get https://api.example.com/users --header Authorization "Bearer token123"
+get https://api.example.com/users --header "Authorization: Bearer token123"
 ```
 
 Multiple headers can be added by repeating the flag:
 
 ```bash
 get https://api.example.com/users \
-  --header Authorization "Bearer token123" \
-  --header Accept "application/json"
+  --header "Authorization: Bearer token123" \
+  --header "Accept: application/json"
+```
+
+### `--query "Key=Value"`
+
+Add a URL query parameter in `"Key=Value"` format. Repeat the flag for more.
+
+```bash
+get https://api.example.com/users --query "page=1" --query "limit=20"
 ```
 
 ### `--json <json-string>`
@@ -136,6 +156,26 @@ Set the request body to a JSON string. Automatically adds `Content-Type: applica
 
 ```bash
 post https://api.example.com/users --json '{"name":"Alice","email":"alice@example.com"}'
+```
+
+### `--timeout <duration>`
+
+Set the request timeout (default `30s`). Accepts Go duration strings like `5s`, `1500ms`, `1m`.
+
+```bash
+get https://api.example.com/slow --timeout 5s
+```
+
+### Output verbosity
+
+Choose how much of the exchange is printed. Defaults to `--normal`.
+
+- `--minimal` — status code and headers only
+- `--normal` — status code, headers, and body
+- `--full` — request details plus the full response
+
+```bash
+get https://api.example.com/users --full
 ```
 
 ---
@@ -154,17 +194,27 @@ gon> post https://jsonplaceholder.typicode.com/posts --json '{"title":"foo","bod
 
 **GET with custom header:**
 ```
-gon> get https://api.example.com/profile --header Authorization "Bearer mytoken"
+gon> get https://api.example.com/profile --header "Authorization: Bearer mytoken"
+```
+
+**GET with query parameters:**
+```
+gon> get https://api.example.com/users --query "page=1" --query "limit=20"
 ```
 
 **PATCH with JSON body and header:**
 ```
-gon> patch https://api.example.com/users/42 --json '{"name":"Bob"}' --header Authorization "Bearer mytoken"
+gon> patch https://api.example.com/users/42 --json '{"name":"Bob"}' --header "Authorization: Bearer mytoken"
 ```
 
 **DELETE a resource:**
 ```
 gon> delete https://api.example.com/users/42
+```
+
+**Run a saved request with an override:**
+```
+gon> run auth/login --json '{"username":"admin","password":"secret"}'
 ```
 
 **One-shot from the shell:**
@@ -207,6 +257,84 @@ is sent to `https://api.example.com/v1/users` with the `Authorization` header an
   key wins over the workspace default; the default is dropped, not duplicated.
 - When you're inside a workspace the REPL prompt shows its name, e.g.
   `gon(my-project)>`, and command history is kept per-workspace under `.gon/cache/`.
+
+---
+
+## Collections & Saved Requests
+
+Save requests to YAML files so you can run them by name instead of retyping the
+URL, headers, and body each time. Requests live in plain folders; a folder
+becomes a **collection** when it holds a `collection.yml` that defines shared
+defaults.
+
+### Scaffold a request
+
+```
+gon> request new auth/login --method POST
+```
+
+This creates `auth/login.yml` and, if needed, a `collection.yml` for every
+folder along the path (`auth/` here). Edit the generated file to fill in the URL,
+headers, query, and body:
+
+```yaml
+# auth/login.yml
+name: login
+method: POST
+url: /login
+headers:
+  Accept: application/json
+query:
+  verbose: "true"
+body:
+  json:
+    username: admin
+    password: secret
+```
+
+A request body can be one of `json`, `raw` (with an optional `contentType`), or
+`form` — only one kind may be set.
+
+### Create a collection
+
+```
+gon> collection init auth/admin
+```
+
+Creates the nested folders and a `collection.yml` in each. A `collection.yml`
+holds defaults applied to every request beneath it:
+
+```yaml
+# auth/collection.yml
+name: auth
+config:
+  path: /auth
+  headers:
+    Authorization: Bearer my-token
+  query:
+    api_key: abc123
+```
+
+### Run a request
+
+```
+gon> run auth/login
+```
+
+`run` loads the request, layers on the config from each enclosing collection
+(and the workspace), and sends it. Resolution rules:
+
+- **Paths are additive** — each collection's `config.path` is prefixed
+  outermost-first, then the request's own `url`, so `auth/login` above resolves
+  to `<base_url>/auth/login`. Absolute `http(s)://` URLs bypass this.
+- **Inner collections win** — when collections set the same header or query key,
+  the nearest collection to the request takes precedence.
+- **CLI flags override everything** — `--header`, `--query`, and `--json` passed
+  to `run` replace the saved/collection values for that key.
+
+```
+gon> run auth/login --header "X-Trace: 1" --full
+```
 
 ---
 
