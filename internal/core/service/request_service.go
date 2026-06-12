@@ -60,7 +60,7 @@ func (s *requestService) Run(ctx context.Context, root string, requestPath strin
 
 	input.URL = prefixCollectionPaths(input.URL, collections)
 
-	result, err := s.httpService.Execute(ctx, input)
+	result, err := s.httpService.Execute(ctx, input, nil)
 	return input, result, err
 }
 

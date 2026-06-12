@@ -33,7 +33,7 @@ func (f *fakeRequestRepo) Exists(ctx context.Context, root, requestPath string) 
 // captureHttpService records the input it was given and returns an empty output.
 type captureHttpService struct{ input *payload.HttpExecuteInput }
 
-func (c *captureHttpService) Execute(ctx context.Context, input *payload.HttpExecuteInput) (*payload.HttpExecuteOutput, error) {
+func (c *captureHttpService) Execute(ctx context.Context, input *payload.HttpExecuteInput, env *domain.Environment) (*payload.HttpExecuteOutput, error) {
 	c.input = input
 	return &payload.HttpExecuteOutput{StatusCode: 200}, nil
 }

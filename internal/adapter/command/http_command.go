@@ -101,7 +101,7 @@ func HttpCommand(method string, httpService driving.HttpService, httpOutput driv
 
 			mode := resolveMode(cmd)
 
-			result, err := httpService.Execute(ctx, input)
+			result, err := httpService.Execute(ctx, input, nil)
 			if err != nil {
 				return err
 			}

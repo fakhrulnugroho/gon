@@ -26,7 +26,7 @@ func TestHttpServiceExecuteSuccess(t *testing.T) {
 	out, err := svc.Execute(context.Background(), &payload.HttpExecuteInput{
 		Method: http.MethodGet,
 		URL:    server.URL,
-	})
+	}, nil)
 
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, out.StatusCode)
@@ -50,7 +50,7 @@ func TestHttpServiceExecuteResolvesWorkspaceURL(t *testing.T) {
 	_, err := svc.Execute(context.Background(), &payload.HttpExecuteInput{
 		Method: http.MethodGet,
 		URL:    "/users",
-	})
+	}, nil)
 
 	require.NoError(t, err)
 	assert.Equal(t, "/users", gotPath)
@@ -71,7 +71,7 @@ func TestHttpServiceExecuteAbsoluteURLBypassesWorkspace(t *testing.T) {
 	_, err := svc.Execute(context.Background(), &payload.HttpExecuteInput{
 		Method: http.MethodGet,
 		URL:    server.URL + "/abs",
-	})
+	}, nil)
 
 	require.NoError(t, err)
 	assert.True(t, hit)
@@ -98,7 +98,7 @@ func TestHttpServiceExecuteAppliesWorkspaceDefaults(t *testing.T) {
 	svc := NewHttpService(ws, server.Client())
 
 	input := &payload.HttpExecuteInput{Method: http.MethodGet, URL: "/users"}
-	_, err := svc.Execute(context.Background(), input)
+	_, err := svc.Execute(context.Background(), input, nil)
 
 	require.NoError(t, err)
 	assert.Equal(t, "Bearer default", gotHeader)
@@ -127,7 +127,7 @@ func TestHttpServiceExecuteRequestOverridesWorkspaceDefaults(t *testing.T) {
 		Method:  http.MethodGet,
 		URL:     "/",
 		Headers: map[string][]string{"Authorization": {"Bearer override"}},
-	})
+	}, nil)
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"Bearer override"}, gotHeaders)
@@ -146,7 +146,7 @@ func TestHttpServiceExecuteForwardsHeaders(t *testing.T) {
 		Method:  http.MethodGet,
 		URL:     server.URL,
 		Headers: map[string][]string{"X-Token": {"secret"}},
-	})
+	}, nil)
 
 	require.NoError(t, err)
 	assert.Equal(t, "secret", gotHeader)
@@ -165,7 +165,7 @@ func TestHttpServiceExecuteEncodesQuery(t *testing.T) {
 		Method: http.MethodGet,
 		URL:    server.URL,
 		Query:  map[string][]string{"page": {"2"}},
-	})
+	}, nil)
 
 	require.NoError(t, err)
 	assert.Equal(t, "2", gotQuery)
@@ -184,7 +184,7 @@ func TestHttpServiceExecuteSendsBody(t *testing.T) {
 		Method: http.MethodPost,
 		URL:    server.URL,
 		Body:   []byte(`{"name":"gon"}`),
-	})
+	}, nil)
 
 	require.NoError(t, err)
 	assert.Equal(t, `{"name":"gon"}`, string(gotBody))
@@ -204,7 +204,7 @@ func TestHttpServiceExecuteNilBody(t *testing.T) {
 		Method: http.MethodGet,
 		URL:    server.URL,
 		Body:   nil,
-	})
+	}, nil)
 
 	require.NoError(t, err)
 }
@@ -214,7 +214,7 @@ func TestHttpServiceExecuteInvalidMethod(t *testing.T) {
 	_, err := svc.Execute(context.Background(), &payload.HttpExecuteInput{
 		Method: "INVALID METHOD",
 		URL:    "https://example.com",
-	})
+	}, nil)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "error building request")
@@ -230,8 +230,58 @@ func TestHttpServiceExecuteTransportError(t *testing.T) {
 	_, err := svc.Execute(context.Background(), &payload.HttpExecuteInput{
 		Method: http.MethodGet,
 		URL:    url,
-	})
+	}, nil)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "response error")
+}
+
+func TestHttpServiceExecuteSubstitutesVariables(t *testing.T) {
+	var gotPath, gotHeader, gotQuery string
+	var gotBody []byte
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotHeader = r.Header.Get("Authorization")
+		gotQuery = r.URL.Query().Get("uid")
+		gotBody, _ = io.ReadAll(r.Body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	env := &domain.Environment{
+		Name:      "dev",
+		BaseURL:   server.URL,
+		Variables: map[string]string{"token": "secret", "uid": "42"},
+	}
+	svc := NewHttpService(nil, server.Client())
+
+	input := &payload.HttpExecuteInput{
+		Method:  http.MethodPost,
+		URL:     "/users/{{uid}}",
+		Headers: map[string][]string{"Authorization": {"Bearer {{token}}"}},
+		Query:   map[string][]string{"uid": {"{{uid}}"}},
+		Body:    []byte(`{"id":"{{uid}}"}`),
+	}
+	_, err := svc.Execute(context.Background(), input, env)
+
+	require.NoError(t, err)
+	assert.Equal(t, "/users/42", gotPath)
+	assert.Equal(t, "Bearer secret", gotHeader)
+	assert.Equal(t, "42", gotQuery)
+	assert.Equal(t, `{"id":"42"}`, string(gotBody))
+}
+
+func TestHttpServiceExecuteFailsOnUnresolvedVariable(t *testing.T) {
+	env := &domain.Environment{Name: "dev", BaseURL: "https://api.example.com"}
+	svc := NewHttpService(nil, http.DefaultClient)
+
+	_, err := svc.Execute(context.Background(), &payload.HttpExecuteInput{
+		Method:  http.MethodGet,
+		URL:     "/users",
+		Headers: map[string][]string{"Authorization": {"Bearer {{token}}"}},
+	}, env)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unresolved variable")
+	assert.Contains(t, err.Error(), "token")
 }
