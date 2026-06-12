@@ -53,7 +53,7 @@ func RunCommand(requestService driving.RequestService, httpOutput driven.HttpOut
 				return err
 			}
 
-			merged, result, err := requestService.Run(ctx, cwd, cmd.StringArg("path"), overrides)
+			merged, result, err := requestService.Run(ctx, cwd, cmd.StringArg("path"), overrides, nil)
 			if err != nil {
 				return err
 			}
