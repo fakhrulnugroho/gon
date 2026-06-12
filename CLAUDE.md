@@ -41,7 +41,7 @@ internal/
   adapter/
     command/                 ← driving adapters — CLI commands via urfave/cli/v3
     output/                  ← driven adapters — formats and prints responses
-    repository/              ← driven adapters — YAML persistence (workspace)
+    repository/              ← driven adapters — YAML persistence (workspace, collections, requests)
     model/                   ← serialization models for YAML (domain → model mapping)
   utility/                   ← ANSI color helpers, JSON pretty-printer
   version/                   ← Version/OS/Arch vars, injected via -ldflags at build
@@ -57,9 +57,15 @@ internal/
 
 ### Workspace
 
-`gon workspace init` creates `.gon/workspace.yaml` in the current directory. The workspace name is derived from the folder name (converted to kebab-case). The YAML is written via `WorkspaceRepository` (adapter/repository) using `WorkspaceModel` (adapter/model) as the serialization layer — domain structs are never marshalled directly.
+`gon init` creates `.gon/workspace.yaml` in the current directory (the CLI command is named `init`, registered under the "Workspace" help group). The workspace name is derived from the folder name (converted to kebab-case). The YAML is written via `WorkspaceRepository` (adapter/repository) using `WorkspaceModel` (adapter/model) as the serialization layer — domain structs are never marshalled directly.
 
 The workspace `Config` (default `headers`, `query`, and base `path`) is applied to every request by `Workspace.ApplyDefaults` (domain), called from `HttpService.Execute`. `ResolveURL` resolves a relative request URL to `BaseURL + Config.Path + path`; absolute `http(s)://` URLs bypass it. Per-request `--header`/`--query` flags take precedence over the workspace defaults (the default for a colliding key is dropped, not duplicated). Because `ApplyDefaults` mutates the shared `HttpExecuteInput`, the `--full` display echoes the merged request.
+
+### Collections & requests
+
+Collections and saved requests live **under `.gon/`** — the `.gon` directory name is the shared `gonDir` constant in `adapter/repository`. `collection init auth/admin` writes `.gon/auth/admin/collection.yml`; `request new auth/login` writes `.gon/auth/login.yml`. The repositories receive the project root (cwd) and join `.gon` themselves, mirroring `WorkspaceRepository`. `RequestRepository.Load` walks the collection chain from the request's folder up to `.gon` (nearest-first).
+
+All three operations — `collection init`, `request new`, and `run` — require an initialized workspace. `CollectionService`/`RequestService` are injected with `WorkspaceRepository` and call the shared `ensureWorkspace` guard (core/service) first; when `.gon/workspace.yaml` is absent (`WorkspaceRepository.Exists` returns false) they fail with `no gon workspace found, run 'init' first`.
 
 ### Adding a new command
 

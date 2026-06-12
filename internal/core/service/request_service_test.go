@@ -52,7 +52,7 @@ func TestRequestServiceRun(t *testing.T) {
 			},
 		}
 		http := &captureHttpService{}
-		svc := NewRequestService(repo, nil, http)
+		svc := NewRequestService(repo, nil, &mockWorkspaceRepository{existsResponse: true}, http)
 
 		overrides := &payload.HttpExecuteInput{Headers: map[string][]string{"X-Inner": {"override"}}}
 		_, _, err := svc.Run(context.Background(), "/root", "auth/admin/impersonate", overrides)
@@ -75,7 +75,7 @@ func TestRequestServiceRun(t *testing.T) {
 			collections: []domain.Collection{{Config: domain.Config{Path: "/auth"}}},
 		}
 		http := &captureHttpService{}
-		svc := NewRequestService(repo, nil, http)
+		svc := NewRequestService(repo, nil, &mockWorkspaceRepository{existsResponse: true}, http)
 
 		_, _, err := svc.Run(context.Background(), "/root", "auth/x", nil)
 
@@ -87,7 +87,7 @@ func TestRequestServiceRun(t *testing.T) {
 func TestRequestServiceCreate(t *testing.T) {
 	repo := &fakeRequestRepo{}
 	collections := &recordingCollectionRepo{}
-	svc := NewRequestService(repo, collections, nil)
+	svc := NewRequestService(repo, collections, &mockWorkspaceRepository{existsResponse: true}, nil)
 
 	err := svc.Create(context.Background(), "/root", "auth/login", "post")
 
@@ -95,4 +95,30 @@ func TestRequestServiceCreate(t *testing.T) {
 	// parent collection auth had to be created
 	assert.Equal(t, []string{"auth"}, collections.saved)
 	assert.Len(t, repo.saved, 1)
+}
+
+func TestRequestServiceRequiresWorkspace(t *testing.T) {
+	t.Run("Create errors when no workspace is initialized", func(t *testing.T) {
+		repo := &fakeRequestRepo{}
+		collections := &recordingCollectionRepo{}
+		svc := NewRequestService(repo, collections, &mockWorkspaceRepository{existsResponse: false}, nil)
+
+		err := svc.Create(context.Background(), "/root", "auth/login", "post")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no gon workspace found")
+		assert.Empty(t, repo.saved)
+	})
+
+	t.Run("Run errors when no workspace is initialized", func(t *testing.T) {
+		repo := &fakeRequestRepo{request: domain.Request{Method: "GET", URL: "/x"}}
+		http := &captureHttpService{}
+		svc := NewRequestService(repo, nil, &mockWorkspaceRepository{existsResponse: false}, http)
+
+		_, _, err := svc.Run(context.Background(), "/root", "auth/x", nil)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no gon workspace found")
+		assert.Nil(t, http.input)
+	})
 }

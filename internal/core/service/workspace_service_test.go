@@ -15,12 +15,14 @@ import (
 // driven.WorkspaceRepository. It records the arguments passed to Save and
 // returns a configurable error.
 type mockWorkspaceRepository struct {
-	saveErr      error
-	savedDir     string
-	saved        domain.Workspace
-	saveCalls    int
-	loadErr      error
-	loadResponse *domain.Workspace
+	saveErr        error
+	savedDir       string
+	saved          domain.Workspace
+	saveCalls      int
+	loadErr        error
+	loadResponse   *domain.Workspace
+	existsResponse bool
+	existsErr      error
 }
 
 func (m *mockWorkspaceRepository) Save(_ context.Context, directory string, workspace domain.Workspace) error {
@@ -32,6 +34,10 @@ func (m *mockWorkspaceRepository) Save(_ context.Context, directory string, work
 
 func (m *mockWorkspaceRepository) Load(_ context.Context, _ string) (*domain.Workspace, error) {
 	return m.loadResponse, m.loadErr
+}
+
+func (m *mockWorkspaceRepository) Exists(_ context.Context, _ string) (bool, error) {
+	return m.existsResponse, m.existsErr
 }
 
 func TestWorkspaceServiceCreate(t *testing.T) {

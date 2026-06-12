@@ -32,8 +32,8 @@ func cli_app(workspace *domain.Workspace) *cli.Command {
 
 	requestRepository := repository.NewRequestRepository()
 	collectionRepository := repository.NewCollectionRepository()
-	requestService := service.NewRequestService(requestRepository, collectionRepository, httpService)
-	collectionService := service.NewCollectionService(collectionRepository)
+	requestService := service.NewRequestService(requestRepository, collectionRepository, workspaceRepository, httpService)
+	collectionService := service.NewCollectionService(collectionRepository, workspaceRepository)
 
 	httpCommands := []*cli.Command{
 		command.HttpCommand(strings.ToLower(http.MethodGet), httpService, httpOutput),

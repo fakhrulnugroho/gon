@@ -31,7 +31,7 @@ func (r *recordingCollectionRepo) Exists(ctx context.Context, root, collectionPa
 func TestCollectionServiceCreate(t *testing.T) {
 	t.Run("creates nested collections including ancestors", func(t *testing.T) {
 		repo := &recordingCollectionRepo{}
-		svc := NewCollectionService(repo)
+		svc := NewCollectionService(repo, &mockWorkspaceRepository{existsResponse: true})
 
 		err := svc.Create(context.Background(), "/root", "auth/admin")
 
@@ -41,7 +41,7 @@ func TestCollectionServiceCreate(t *testing.T) {
 
 	t.Run("errors when target already exists", func(t *testing.T) {
 		repo := &recordingCollectionRepo{existing: map[string]bool{"auth": true}}
-		svc := NewCollectionService(repo)
+		svc := NewCollectionService(repo, &mockWorkspaceRepository{existsResponse: true})
 
 		err := svc.Create(context.Background(), "/root", "auth")
 
@@ -51,11 +51,22 @@ func TestCollectionServiceCreate(t *testing.T) {
 
 	t.Run("skips existing ancestor and creates target", func(t *testing.T) {
 		repo := &recordingCollectionRepo{existing: map[string]bool{"auth": true}}
-		svc := NewCollectionService(repo)
+		svc := NewCollectionService(repo, &mockWorkspaceRepository{existsResponse: true})
 
 		err := svc.Create(context.Background(), "/root", "auth/admin")
 
 		require.NoError(t, err)
 		assert.Equal(t, []string{"auth/admin"}, repo.saved)
+	})
+
+	t.Run("errors when no workspace is initialized", func(t *testing.T) {
+		repo := &recordingCollectionRepo{}
+		svc := NewCollectionService(repo, &mockWorkspaceRepository{existsResponse: false})
+
+		err := svc.Create(context.Background(), "/root", "auth")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no gon workspace found")
+		assert.Empty(t, repo.saved)
 	})
 }

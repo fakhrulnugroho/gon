@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"gon/internal/core/domain"
 	"gon/internal/core/port/driven"
 	"gon/internal/core/port/driving"
@@ -25,6 +26,21 @@ func (s *workspaceService) Create(ctx context.Context, directory string) error {
 		BaseURL: "https://api.example.com",
 	}
 	return s.workspaceRepository.Save(ctx, directory, workspace)
+}
+
+// ensureWorkspace guards collection/request operations: they only make sense
+// inside an initialized workspace, since every artifact lives under .gon. When
+// no workspace is present it returns an actionable error pointing at
+// 'workspace init'.
+func ensureWorkspace(ctx context.Context, repo driven.WorkspaceRepository, root string) error {
+	exists, err := repo.Exists(ctx, root)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("no gon workspace found, run 'init' first")
+	}
+	return nil
 }
 
 func getFolderName(directory string) string {

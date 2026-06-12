@@ -2,14 +2,22 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"gon/internal/adapter/model"
 	"gon/internal/core/domain"
 	"gon/internal/core/port/driven"
+	"io/fs"
 	"os"
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
+
+// gonDir is the per-project directory that holds the workspace, collections,
+// requests, and cache. Every gon artifact lives under it.
+const gonDir = ".gon"
+
+const workspaceFileName = "workspace.yaml"
 
 type workspaceRepository struct {
 }
@@ -23,19 +31,19 @@ func (r *workspaceRepository) Save(ctx context.Context, directory string, worksp
 	if err != nil {
 		return err
 	}
-	gonDirectory := filepath.Join(directory, ".gon")
+	gonDirectory := filepath.Join(directory, gonDir)
 	if err := os.MkdirAll(gonDirectory, 0755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(gonDirectory, "workspace.yaml"), data, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(gonDirectory, workspaceFileName), data, 0644); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r *workspaceRepository) Load(ctx context.Context, directory string) (*domain.Workspace, error) {
-	gonDirectory := filepath.Join(directory, ".gon")
-	data, err := os.ReadFile(filepath.Join(gonDirectory, "workspace.yaml"))
+	gonDirectory := filepath.Join(directory, gonDir)
+	data, err := os.ReadFile(filepath.Join(gonDirectory, workspaceFileName))
 	if err != nil {
 		return nil, err
 	}
@@ -44,4 +52,16 @@ func (r *workspaceRepository) Load(ctx context.Context, directory string) (*doma
 		return nil, err
 	}
 	return workspaceModel.ToDomain(), nil
+}
+
+// Exists reports whether a workspace has been initialized for directory, i.e.
+// whether directory/.gon/workspace.yaml is present.
+func (r *workspaceRepository) Exists(ctx context.Context, directory string) (bool, error) {
+	if _, err := os.Stat(filepath.Join(directory, gonDir, workspaceFileName)); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }

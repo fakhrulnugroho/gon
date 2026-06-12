@@ -29,12 +29,13 @@ func NewRequestRepository() driven.RequestRepository {
 // ErrNotExist is propagated.
 func resolveFile(root, requestPath string) (string, bool, error) {
 	clean := filepath.Clean(requestPath)
+	base := filepath.Join(root, gonDir, clean)
 	candidates := []string{
-		filepath.Join(root, clean) + ".yml",
-		filepath.Join(root, clean) + ".yaml",
+		base + ".yml",
+		base + ".yaml",
 	}
 	if hasExtension(clean) {
-		candidates = []string{filepath.Join(root, clean)}
+		candidates = []string{base}
 	}
 	for _, candidate := range candidates {
 		_, err := os.Stat(candidate)
@@ -81,7 +82,7 @@ func (r *requestRepository) Load(ctx context.Context, root string, requestPath s
 		return nil, nil, fmt.Errorf("error in %s: %w", file, err)
 	}
 
-	collections, err := loadCollectionChain(root, filepath.Dir(file))
+	collections, err := loadCollectionChain(filepath.Join(root, gonDir), filepath.Dir(file))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -132,7 +133,7 @@ func (r *requestRepository) Save(ctx context.Context, root string, requestPath s
 	if !hasExtension(clean) {
 		clean += ".yml"
 	}
-	target := filepath.Join(root, clean)
+	target := filepath.Join(root, gonDir, clean)
 	if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
 		return err
 	}

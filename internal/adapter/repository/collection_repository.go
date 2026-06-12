@@ -21,7 +21,7 @@ func NewCollectionRepository() driven.CollectionRepository {
 }
 
 func (r *collectionRepository) Save(ctx context.Context, root string, collectionPath string, collection domain.Collection) error {
-	dir := filepath.Join(root, filepath.Clean(collectionPath))
+	dir := filepath.Join(root, gonDir, filepath.Clean(collectionPath))
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (r *collectionRepository) Save(ctx context.Context, root string, collection
 }
 
 func (r *collectionRepository) Exists(ctx context.Context, root string, collectionPath string) (bool, error) {
-	file := filepath.Join(root, filepath.Clean(collectionPath), collectionFileName)
+	file := filepath.Join(root, gonDir, filepath.Clean(collectionPath), collectionFileName)
 	if _, err := os.Stat(file); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return false, nil

@@ -8,4 +8,5 @@ import (
 type WorkspaceRepository interface {
 	Save(ctx context.Context, directory string, workspace domain.Workspace) error
 	Load(ctx context.Context, directory string) (*domain.Workspace, error)
+	Exists(ctx context.Context, directory string) (bool, error)
 }

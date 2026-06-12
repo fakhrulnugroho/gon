@@ -15,13 +15,18 @@ import (
 
 type collectionService struct {
 	collectionRepository driven.CollectionRepository
+	workspaceRepository  driven.WorkspaceRepository
 }
 
-func NewCollectionService(collectionRepository driven.CollectionRepository) driving.CollectionService {
-	return &collectionService{collectionRepository: collectionRepository}
+func NewCollectionService(collectionRepository driven.CollectionRepository, workspaceRepository driven.WorkspaceRepository) driving.CollectionService {
+	return &collectionService{collectionRepository: collectionRepository, workspaceRepository: workspaceRepository}
 }
 
 func (s *collectionService) Create(ctx context.Context, root string, collectionPath string) error {
+	if err := ensureWorkspace(ctx, s.workspaceRepository, root); err != nil {
+		return err
+	}
+
 	normalized := strings.Trim(toSlash(collectionPath), "/")
 	if normalized == "" {
 		return fmt.Errorf("collection path is required")

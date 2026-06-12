@@ -99,10 +99,14 @@ delete <url> [options]    Send an HTTP DELETE request
 ### Workspace Commands
 
 ```
-workspace init    Create a .gon/workspace.yaml in the current directory
+init    Create a .gon/workspace.yaml in the current directory
 ```
 
 ### Collection Commands
+
+These commands require an initialized workspace (`init`) — collections and
+requests are stored under the workspace's `.gon/` directory. Without one they
+exit with `no gon workspace found, run 'init' first`.
 
 ```
 run        <path> [options]    Run a saved request by path (e.g. run auth/login)
@@ -226,10 +230,11 @@ gon post https://api.example.com/login --json '{"username":"admin","password":"s
 
 ## Workspaces
 
-Run `gon workspace init` in a project directory to create a `.gon/workspace.yaml`.
+Run `gon init` in a project directory to create a `.gon/workspace.yaml`.
 A workspace gives every request a base URL plus defaults that are applied
 automatically — so you don't repeat the same host, auth header, or query string on
-every call.
+every call. It also anchors `.gon/` as the home for your collections and saved
+requests, so `collection init`, `request new`, and `run` all require it.
 
 ```yaml
 name: my-project
@@ -263,9 +268,9 @@ is sent to `https://api.example.com/v1/users` with the `Authorization` header an
 ## Collections & Saved Requests
 
 Save requests to YAML files so you can run them by name instead of retyping the
-URL, headers, and body each time. Requests live in plain folders; a folder
-becomes a **collection** when it holds a `collection.yml` that defines shared
-defaults.
+URL, headers, and body each time. Everything lives under the workspace's `.gon/`
+directory, so run `gon init` first. Requests are plain files; a folder becomes a
+**collection** when it holds a `collection.yml` that defines shared defaults.
 
 ### Scaffold a request
 
@@ -273,12 +278,12 @@ defaults.
 gon> request new auth/login --method POST
 ```
 
-This creates `auth/login.yml` and, if needed, a `collection.yml` for every
-folder along the path (`auth/` here). Edit the generated file to fill in the URL,
-headers, query, and body:
+This creates `.gon/auth/login.yml` and, if needed, a `collection.yml` for every
+folder along the path (`.gon/auth/` here). Edit the generated file to fill in the
+URL, headers, query, and body:
 
 ```yaml
-# auth/login.yml
+# .gon/auth/login.yml
 name: login
 method: POST
 url: /login
@@ -301,11 +306,11 @@ A request body can be one of `json`, `raw` (with an optional `contentType`), or
 gon> collection init auth/admin
 ```
 
-Creates the nested folders and a `collection.yml` in each. A `collection.yml`
-holds defaults applied to every request beneath it:
+Creates the nested folders under `.gon/` and a `collection.yml` in each. A
+`collection.yml` holds defaults applied to every request beneath it:
 
 ```yaml
-# auth/collection.yml
+# .gon/auth/collection.yml
 name: auth
 config:
   path: /auth

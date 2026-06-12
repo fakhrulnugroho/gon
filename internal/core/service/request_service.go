@@ -18,22 +18,29 @@ import (
 type requestService struct {
 	requestRepository    driven.RequestRepository
 	collectionRepository driven.CollectionRepository
+	workspaceRepository  driven.WorkspaceRepository
 	httpService          driving.HttpService
 }
 
 func NewRequestService(
 	requestRepository driven.RequestRepository,
 	collectionRepository driven.CollectionRepository,
+	workspaceRepository driven.WorkspaceRepository,
 	httpService driving.HttpService,
 ) driving.RequestService {
 	return &requestService{
 		requestRepository:    requestRepository,
 		collectionRepository: collectionRepository,
+		workspaceRepository:  workspaceRepository,
 		httpService:          httpService,
 	}
 }
 
 func (s *requestService) Run(ctx context.Context, root string, requestPath string, overrides *payload.HttpExecuteInput) (*payload.HttpExecuteInput, *payload.HttpExecuteOutput, error) {
+	if err := ensureWorkspace(ctx, s.workspaceRepository, root); err != nil {
+		return nil, nil, err
+	}
+
 	request, collections, err := s.requestRepository.Load(ctx, root, requestPath)
 	if err != nil {
 		return nil, nil, err
@@ -95,6 +102,10 @@ func prefixCollectionPaths(url string, collections []domain.Collection) string {
 }
 
 func (s *requestService) Create(ctx context.Context, root string, requestPath string, method string) error {
+	if err := ensureWorkspace(ctx, s.workspaceRepository, root); err != nil {
+		return err
+	}
+
 	exists, err := s.requestRepository.Exists(ctx, root, requestPath)
 	if err != nil {
 		return err

@@ -27,6 +27,6 @@ func TestCollectionRepositorySaveAndExists(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, exists)
 
-	_, err = os.Stat(filepath.Join(root, "auth", "collection.yml"))
+	_, err = os.Stat(filepath.Join(root, ".gon", "auth", "collection.yml"))
 	require.NoError(t, err)
 }
