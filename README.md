@@ -4,6 +4,24 @@ An interactive HTTP client for terminal lovers.
 
 `gon` runs as a REPL in your terminal — send HTTP requests, inspect colorized responses, and keep your workflow in the shell without leaving it.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Platform Support](#platform-support)
+- [Usage](#usage) — [interactive](#interactive-mode) / [one-shot](#one-shot-mode)
+- [Commands](#commands)
+- [Options](#options)
+- [Examples](#examples)
+- [Workspaces](#workspaces)
+- [Collections & Saved Requests](#collections--saved-requests)
+- [Environments](#environments)
+- [Project Layout](#project-layout)
+- [Output](#output)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
 - Interactive REPL with per-workspace command history
@@ -49,6 +67,90 @@ cd gon
 go build -o gon ./cmd
 ```
 
+### Uninstall
+
+The install script places the binary in `~/.gon/bin/` and adds that directory to
+your `PATH`. To remove it:
+
+```bash
+rm -rf ~/.gon/bin
+```
+
+Then delete the `export PATH=".../.gon/bin:$PATH"` line the script appended to your
+`~/.bashrc` or `~/.zshrc`.
+
+## Quick Start
+
+A five-minute tour from an empty folder to a saved, reusable request.
+
+**1. Create a project folder and initialize a workspace.**
+
+```bash
+mkdir my-api && cd my-api
+gon init
+```
+
+This writes `workspace.yml` (shared request defaults) and `environments/local.yml`
+(your first environment, marked active). The workspace name is derived from the
+folder, so this one is called `my-api`.
+
+**2. Point the `local` environment at your API.** Edit `environments/local.yml`:
+
+```yaml
+name: local
+base_url: https://jsonplaceholder.typicode.com
+variables:
+  token: dev-secret-123
+```
+
+`base_url` is where relative requests are sent; `variables` are values you can
+reference anywhere with `{{name}}`.
+
+**3. Send your first request.** Start the REPL and use a relative URL — it resolves
+against the environment's `base_url`:
+
+```
+$ gon
+gon(my-api)> get /todos/1
+
+200 OK (84ms)
+
+{
+  "userId": 1,
+  "id": 1,
+  "title": "delectus aut autem",
+  "completed": false
+}
+```
+
+**4. Save a request you'll reuse.** Scaffold it, then edit the generated file:
+
+```
+gon(my-api)> request new todos/create --method POST
+```
+
+```yaml
+# todos/create.yml
+name: create
+method: POST
+url: /todos
+headers:
+  Authorization: Bearer {{token}}   # resolved from the active environment
+body:
+  json:
+    title: Buy milk
+    completed: false
+```
+
+**5. Run it by name — any time, from anyone who clones the folder:**
+
+```
+gon(my-api)> run todos/create
+```
+
+That's the whole loop: `init` → set an environment → send requests → save the
+useful ones → `run` them by path. The next sections cover each piece in depth.
+
 ## Platform Support
 
 | OS      | amd64 | arm64 |
@@ -71,7 +173,11 @@ Type 'help' for available commands
 gon> _
 ```
 
-The REPL supports command history (stored at `/tmp/gon.history`). Press `^C` to interrupt or type `exit` to quit.
+The REPL supports command history. Outside a workspace it is stored at
+`/tmp/gon.history`; inside a workspace it is kept per-workspace under
+`.cache/<workspace-name>.history`, so each project has its own history. Press `^C`
+to interrupt or type `exit` to quit. When you're in a workspace the prompt shows
+its name, e.g. `gon(my-api)>`.
 
 ### One-shot mode
 
@@ -194,9 +300,13 @@ gon get /users --env prod
 
 Choose how much of the exchange is printed. Defaults to `--normal`.
 
-- `--minimal` — status code and headers only
-- `--normal` — status code, headers, and body
-- `--full` — request details plus the full response
+- `--minimal` — status code and response body only (no headers)
+- `--normal` — status code, response headers, and body (this is the default)
+- `--full` — everything `--normal` shows, plus an echo of the request that was
+  actually sent (method, URL, merged headers, and body) above a separator
+
+If you pass more than one, `--minimal` wins over `--full`, which wins over
+`--normal`.
 
 ```bash
 get https://api.example.com/users --full
@@ -409,6 +519,44 @@ developer on the team can choose their own environment independently.
 
 ---
 
+## Project Layout
+
+Everything `gon` creates is plain text at the workspace root, so the whole folder
+is a self-contained, shareable artifact — commit it to git, or hand it to a
+teammate and they get your environments, collections, and saved requests intact.
+
+```
+my-api/
+├── workspace.yml            # workspace name + shared config defaults (path, headers, query)
+├── environments/
+│   ├── local.yml            # an environment: base_url + variables
+│   └── prod.yml
+├── auth/                    # a collection (any folder with a collection.yml)
+│   ├── collection.yml       # defaults applied to every request beneath it
+│   └── login.yml            # a saved request
+├── todos/
+│   └── create.yml
+├── .gon/
+│   └── active-env           # per-developer active environment (gitignored)
+└── .cache/
+    └── my-api.history       # per-workspace REPL history (gitignored)
+```
+
+| Path | Purpose | Commit to git? |
+|------|---------|----------------|
+| `workspace.yml` | Workspace name and shared `config` defaults | ✅ Yes |
+| `environments/*.yml` | Named variable sets, each with a `base_url` | ✅ Yes |
+| `<path>/collection.yml` | Defaults shared by requests in that folder | ✅ Yes |
+| `<path>/<name>.yml` | A saved request | ✅ Yes |
+| `.gon/active-env` | Which environment *you* have selected | ❌ No (gitignored) |
+| `.cache/*.history` | Your REPL command history | ❌ No (gitignored) |
+
+`gon init` scaffolds a `.gitignore` that excludes `.gon/` and `.cache/`, so the
+per-developer files never get committed — each teammate keeps their own active
+environment and history.
+
+---
+
 ## Output
 
 Every response is displayed with:
@@ -436,6 +584,30 @@ Example output:
   "completed": false
 }
 ```
+
+---
+
+## Contributing
+
+Contributions are welcome. To work on `gon` locally:
+
+```bash
+git clone https://github.com/fakhrulnugroho/gon.git
+cd gon
+
+go build -o gon ./cmd     # build
+go test ./...             # run the test suite
+go run ./cmd              # run the REPL from source
+```
+
+`gon` follows a **hexagonal architecture** (ports & adapters) — the dependency
+direction always points inward toward `core`, and domain structs are never
+marshalled directly (adapters map them through serialization models). Before
+adding a command, read [`CLAUDE.md`](./CLAUDE.md), which documents the layer
+boundaries and the step-by-step recipe for wiring a new command end to end.
+
+Please keep new code covered by tests (`go test ./...` must pass) and run
+`gofmt` before opening a pull request.
 
 ---
 
