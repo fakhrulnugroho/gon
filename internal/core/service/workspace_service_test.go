@@ -42,7 +42,8 @@ func (m *mockWorkspaceRepository) Exists(_ context.Context, _ string) (bool, err
 
 func TestWorkspaceServiceCreate(t *testing.T) {
 	repo := &mockWorkspaceRepository{}
-	svc := NewWorkspaceService(repo)
+	envRepo := newFakeEnvRepo()
+	svc := NewWorkspaceService(repo, envRepo)
 
 	err := svc.Create(context.Background(), "/home/user/My Project")
 	require.NoError(t, err)
@@ -50,14 +51,21 @@ func TestWorkspaceServiceCreate(t *testing.T) {
 	assert.Equal(t, 1, repo.saveCalls)
 	assert.Equal(t, "/home/user/My Project", repo.savedDir)
 	assert.Equal(t, "my-project", repo.saved.Name)
-	assert.Equal(t, "https://api.example.com", repo.saved.BaseURL)
+	// base_url is no longer written to the workspace; it lives in the environment.
+	assert.Equal(t, "", repo.saved.BaseURL)
 	assert.Equal(t, domain.Config{}, repo.saved.Config)
+
+	// a 'local' environment is scaffolded and marked active.
+	local, ok := envRepo.envs["local"]
+	require.True(t, ok)
+	assert.Equal(t, "https://api.example.com", local.BaseURL)
+	assert.Equal(t, "local", envRepo.active)
 }
 
 func TestWorkspaceServiceCreatePropagatesError(t *testing.T) {
 	sentinel := errors.New("disk full")
 	repo := &mockWorkspaceRepository{saveErr: sentinel}
-	svc := NewWorkspaceService(repo)
+	svc := NewWorkspaceService(repo, newFakeEnvRepo())
 
 	err := svc.Create(context.Background(), "/tmp/proj")
 	require.Error(t, err)
