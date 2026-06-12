@@ -33,7 +33,7 @@ func (f *fakeRequestRepo) Exists(ctx context.Context, root, requestPath string) 
 // captureHttpService records the input it was given and returns an empty output.
 type captureHttpService struct{ input *payload.HttpExecuteInput }
 
-func (c *captureHttpService) Execute(ctx context.Context, input *payload.HttpExecuteInput) (*payload.HttpExecuteOutput, error) {
+func (c *captureHttpService) Execute(ctx context.Context, input *payload.HttpExecuteInput, env *domain.Environment) (*payload.HttpExecuteOutput, error) {
 	c.input = input
 	return &payload.HttpExecuteOutput{StatusCode: 200}, nil
 }
@@ -55,7 +55,7 @@ func TestRequestServiceRun(t *testing.T) {
 		svc := NewRequestService(repo, nil, &mockWorkspaceRepository{existsResponse: true}, http)
 
 		overrides := &payload.HttpExecuteInput{Headers: map[string][]string{"X-Inner": {"override"}}}
-		_, _, err := svc.Run(context.Background(), "/root", "auth/admin/impersonate", overrides)
+		_, _, err := svc.Run(context.Background(), "/root", "auth/admin/impersonate", overrides, nil)
 
 		require.NoError(t, err)
 		got := http.input
@@ -77,7 +77,7 @@ func TestRequestServiceRun(t *testing.T) {
 		http := &captureHttpService{}
 		svc := NewRequestService(repo, nil, &mockWorkspaceRepository{existsResponse: true}, http)
 
-		_, _, err := svc.Run(context.Background(), "/root", "auth/x", nil)
+		_, _, err := svc.Run(context.Background(), "/root", "auth/x", nil, nil)
 
 		require.NoError(t, err)
 		assert.Equal(t, "https://other.com/x", http.input.URL)
@@ -115,10 +115,26 @@ func TestRequestServiceRequiresWorkspace(t *testing.T) {
 		http := &captureHttpService{}
 		svc := NewRequestService(repo, nil, &mockWorkspaceRepository{existsResponse: false}, http)
 
-		_, _, err := svc.Run(context.Background(), "/root", "auth/x", nil)
+		_, _, err := svc.Run(context.Background(), "/root", "auth/x", nil, nil)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "no gon workspace found")
 		assert.Nil(t, http.input)
 	})
+}
+
+func TestRequestServiceRunSubstitutesEnv(t *testing.T) {
+	repo := &fakeRequestRepo{
+		request: domain.Request{Method: "GET", URL: "/users/{{uid}}"},
+	}
+	http := &captureHttpService{}
+	svc := NewRequestService(repo, nil, &mockWorkspaceRepository{existsResponse: true}, http)
+
+	env := &domain.Environment{Name: "dev", Variables: map[string]string{"uid": "42"}}
+	_, _, err := svc.Run(context.Background(), "/root", "users/get", nil, env)
+
+	require.NoError(t, err)
+	// the captured input still holds the raw placeholder; substitution happens
+	// inside HttpService.Execute, but the env must reach it unchanged.
+	assert.Equal(t, "/users/{{uid}}", http.input.URL)
 }

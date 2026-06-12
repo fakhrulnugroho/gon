@@ -13,7 +13,8 @@ An interactive HTTP client for terminal lovers.
 - JSON request body via `--json`
 - Selectable output verbosity: `--minimal`, `--normal`, `--full`
 - Per-request `--timeout`
-- Workspaces — a project base URL plus default headers, query params, and base path applied to every request
+- Workspaces — default headers, query params, and base path applied to every request
+- Environments — named variable sets (e.g. `local`, `dev`, `prod`) each with their own base URL; switch with `env use` or `--env`
 - Collections & saved requests — store requests as YAML files, organize them in nested folders, and run them by path with hierarchical config defaults
 - Color-coded HTTP status codes and execution time
 - Syntax-highlighted, pretty-printed JSON responses
@@ -102,6 +103,16 @@ delete <url> [options]    Send an HTTP DELETE request
 init    Create a workspace.yml in the current directory
 ```
 
+### Environment Commands
+
+These commands require an initialized workspace (`init`).
+
+```
+env new  <name>    Scaffold environments/<name>.yml; edit it to set base_url and variables
+env list           List all environments (active one marked with *)
+env use  <name>    Switch the active environment
+```
+
 ### Collection Commands
 
 These commands require an initialized workspace (`init`) — collections and
@@ -170,6 +181,15 @@ Set the request timeout (default `30s`). Accepts Go duration strings like `5s`, 
 get https://api.example.com/slow --timeout 5s
 ```
 
+### `--env <name>`
+
+Override the active environment for a single request. Useful for one-off calls
+against a different target without changing your persisted active selection.
+
+```bash
+gon get /users --env prod
+```
+
 ### Output verbosity
 
 Choose how much of the exchange is printed. Defaults to `--normal`.
@@ -230,21 +250,22 @@ gon post https://api.example.com/login --json '{"username":"admin","password":"s
 
 ## Workspaces
 
-Run `gon init` in a directory to create a `workspace.yml`. A workspace gives every
-request a base URL plus defaults that are applied automatically — so you don't
-repeat the same host, auth header, or query string on every call. The directory
-itself becomes the home for your collections and saved requests, so
-`collection init`, `request new`, and `run` all require it. Because everything is
-plain files at the workspace root, the whole folder is a self-contained, shareable
-artifact — hand it to a frontend teammate or commit it as its own repo.
+Run `gon init` in a directory to create a `workspace.yml` and a default
+`environments/local.yml`. A workspace gives every request shared defaults —
+headers, query params, and a base path — applied automatically, so you don't
+repeat the same auth header or query string on every call. The base URL lives in
+the active environment (see [Environments](#environments) below). The directory
+itself becomes the home for your environments, collections, and saved requests,
+so `collection init`, `request new`, and `run` all require it. Because everything
+is plain files at the workspace root, the whole folder is a self-contained,
+shareable artifact — hand it to a frontend teammate or commit it as its own repo.
 
 ```yaml
 name: my-project
-base_url: https://api.example.com
 config:
   path: /v1
   headers:
-    Authorization: Bearer my-token
+    Authorization: Bearer {{token}}
   query:
     api_key: abc123
 ```
@@ -255,13 +276,16 @@ With the workspace above, a relative request:
 gon> get /users
 ```
 
-is sent to `https://api.example.com/v1/users` with the `Authorization` header and
-`api_key` query parameter already attached.
+is sent to `<active-environment-base_url>/v1/users` with the `Authorization`
+header (resolved from the active environment's `token` variable) and `api_key`
+query parameter already attached.
 
-- **Relative URLs** resolve to `base_url` + `config.path` + the request path.
+- **Relative URLs** resolve to the active environment's `base_url` + `config.path` + the request path.
   Absolute `http(s)://` URLs are used as-is and ignore the workspace.
 - **Defaults are overridable** — a per-request `--header` or `--query` for the same
   key wins over the workspace default; the default is dropped, not duplicated.
+- **`{{var}}` in config** — workspace `config` values may contain `{{name}}`
+  placeholders that resolve from the active environment.
 - When you're inside a workspace the REPL prompt shows its name, e.g.
   `gon(my-project)>`, and command history is kept per-workspace under `.cache/`.
 
@@ -342,6 +366,46 @@ gon> run auth/login
 ```
 gon> run auth/login --header "X-Trace: 1" --full
 ```
+
+---
+
+## Environments
+
+Environments are project-scoped, named sets of variables plus a base URL
+(`local`, `dev`, `test`, `prod`). `gon init` creates `environments/local.yml`
+and marks it active.
+
+```bash
+gon env new dev             # creates environments/dev.yml — edit to set base_url and variables
+gon env list                # list environments; active one is marked with *
+gon env use dev             # switch the active environment
+gon get /users --env prod   # override the active environment for one call
+```
+
+```yaml
+# environments/dev.yml
+name: dev
+base_url: https://api.dev.example.com
+variables:
+  token: abc123
+  user_id: "42"
+```
+
+Requests (and workspace `config` defaults) reference variables with `{{name}}` in
+the URL, header values, query values, and body — for example
+`Authorization: Bearer {{token}}` or `/users/{{user_id}}`. Values resolve from
+the active environment at request time; an unresolved `{{var}}` fails the request
+with an error listing the missing variable names.
+
+The active selection is persisted in `.gon/active-env` (gitignored), so each
+developer on the team can choose their own environment independently.
+
+**Precedence** — when determining which environment to use:
+1. `--env <name>` flag (per-call override)
+2. Persisted active selection (`env use`)
+3. The sole environment, if exactly one exists
+4. Error — if multiple environments exist and none is active, `gon` asks you to
+   run `env use <name>` or pass `--env`.
 
 ---
 

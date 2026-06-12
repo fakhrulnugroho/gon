@@ -36,7 +36,7 @@ func NewRequestService(
 	}
 }
 
-func (s *requestService) Run(ctx context.Context, root string, requestPath string, overrides *payload.HttpExecuteInput) (*payload.HttpExecuteInput, *payload.HttpExecuteOutput, error) {
+func (s *requestService) Run(ctx context.Context, root string, requestPath string, overrides *payload.HttpExecuteInput, env *domain.Environment) (*payload.HttpExecuteInput, *payload.HttpExecuteOutput, error) {
 	if err := ensureWorkspace(ctx, s.workspaceRepository, root); err != nil {
 		return nil, nil, err
 	}
@@ -60,7 +60,7 @@ func (s *requestService) Run(ctx context.Context, root string, requestPath strin
 
 	input.URL = prefixCollectionPaths(input.URL, collections)
 
-	result, err := s.httpService.Execute(ctx, input)
+	result, err := s.httpService.Execute(ctx, input, env)
 	return input, result, err
 }
 

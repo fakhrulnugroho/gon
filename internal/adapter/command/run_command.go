@@ -13,7 +13,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func RunCommand(requestService driving.RequestService, httpOutput driven.HttpOutput) *cli.Command {
+func RunCommand(requestService driving.RequestService, environmentService driving.EnvironmentService, httpOutput driven.HttpOutput) *cli.Command {
 	return &cli.Command{
 		Name:      "run",
 		Usage:     "Run a saved request by path (e.g. run auth/login)",
@@ -53,7 +53,12 @@ func RunCommand(requestService driving.RequestService, httpOutput driven.HttpOut
 				return err
 			}
 
-			merged, result, err := requestService.Run(ctx, cwd, cmd.StringArg("path"), overrides)
+			env, err := environmentService.Resolve(ctx, cwd, cmd.String("env"))
+			if err != nil {
+				return err
+			}
+
+			merged, result, err := requestService.Run(ctx, cwd, cmd.StringArg("path"), overrides, env)
 			if err != nil {
 				return err
 			}
@@ -61,6 +66,7 @@ func RunCommand(requestService driving.RequestService, httpOutput driven.HttpOut
 			return nil
 		},
 		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "env", Usage: "Environment to use for this request (overrides the active one)"},
 			&cli.StringFlag{Name: "json", Value: "", Usage: "JSON body override for the request"},
 			&cli.StringSliceFlag{Name: "header", Usage: `HTTP header override in "Key: Value" format, can be repeated`},
 			&cli.StringSliceFlag{Name: "query", Usage: `HTTP query override in "Key=Value" format, can be repeated`},

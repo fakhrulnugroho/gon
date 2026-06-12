@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"gon/internal/core/domain"
@@ -71,4 +72,24 @@ func TestWorkspaceRepositoryLoadCorruptedYAML(t *testing.T) {
 	loaded, err := repo.Load(context.Background(), dir)
 	require.Error(t, err)
 	assert.Nil(t, loaded)
+}
+
+func TestWorkspaceRepositoryEnsureGitignore(t *testing.T) {
+	root := t.TempDir()
+	repo := NewWorkspaceRepository()
+	ctx := context.Background()
+
+	require.NoError(t, repo.EnsureGitignore(ctx, root, []string{".gon/", ".cache/"}))
+
+	data, err := os.ReadFile(filepath.Join(root, ".gitignore"))
+	require.NoError(t, err)
+	assert.Contains(t, string(data), ".gon/")
+	assert.Contains(t, string(data), ".cache/")
+
+	// idempotent: calling again does not duplicate entries
+	require.NoError(t, repo.EnsureGitignore(ctx, root, []string{".gon/", ".cache/"}))
+	data, err = os.ReadFile(filepath.Join(root, ".gitignore"))
+	require.NoError(t, err)
+	assert.Equal(t, 1, strings.Count(string(data), ".gon/"))
+	assert.Equal(t, 1, strings.Count(string(data), ".cache/"))
 }

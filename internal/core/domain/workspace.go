@@ -7,16 +7,25 @@ import (
 )
 
 type Workspace struct {
-	Name    string
+	Name string
+	// BaseURL is a deprecated fallback. The active Environment's base_url is the
+	// source of truth; BaseURL is only consulted when no environment supplies one
+	// (e.g. older workspaces, or when no environments exist yet).
 	BaseURL string
 	Config  Config
 }
 
-func (w *Workspace) ResolveURL(path string) string {
-	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
-		return path
+// ResolveURL builds the absolute request URL from a base URL, a config path, and
+// the request path. An absolute http(s) request path bypasses resolution.
+func ResolveURL(baseURL, configPath, requestPath string) string {
+	if strings.HasPrefix(requestPath, "http://") || strings.HasPrefix(requestPath, "https://") {
+		return requestPath
 	}
-	return w.BaseURL + w.Config.Path + path
+	return baseURL + configPath + requestPath
+}
+
+func (w *Workspace) ResolveURL(path string) string {
+	return ResolveURL(w.BaseURL, w.Config.Path, path)
 }
 
 // ApplyDefaults merges the workspace's configured default headers and query

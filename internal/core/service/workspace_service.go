@@ -12,20 +12,35 @@ import (
 )
 
 type workspaceService struct {
-	workspaceRepository driven.WorkspaceRepository
+	workspaceRepository   driven.WorkspaceRepository
+	environmentRepository driven.EnvironmentRepository
 }
 
-func NewWorkspaceService(repo driven.WorkspaceRepository) driving.WorkspaceService {
-	return &workspaceService{workspaceRepository: repo}
+func NewWorkspaceService(repo driven.WorkspaceRepository, environmentRepository driven.EnvironmentRepository) driving.WorkspaceService {
+	return &workspaceService{workspaceRepository: repo, environmentRepository: environmentRepository}
 }
 
 func (s *workspaceService) Create(ctx context.Context, directory string) error {
 	workspace := domain.Workspace{
-		Name:    getFolderName(directory),
-		Config:  domain.Config{},
-		BaseURL: "https://api.example.com",
+		Name:   getFolderName(directory),
+		Config: domain.Config{},
 	}
-	return s.workspaceRepository.Save(ctx, directory, workspace)
+	if err := s.workspaceRepository.Save(ctx, directory, workspace); err != nil {
+		return err
+	}
+
+	local := domain.Environment{
+		Name:      "local",
+		BaseURL:   "https://api.example.com",
+		Variables: map[string]string{},
+	}
+	if err := s.environmentRepository.Save(ctx, directory, local); err != nil {
+		return err
+	}
+	if err := s.environmentRepository.WriteActive(ctx, directory, "local"); err != nil {
+		return err
+	}
+	return s.workspaceRepository.EnsureGitignore(ctx, directory, []string{".gon/", ".cache/"})
 }
 
 // ensureWorkspace guards collection/request operations: they only make sense

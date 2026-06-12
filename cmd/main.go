@@ -28,7 +28,9 @@ func cli_app(workspace *domain.Workspace) *cli.Command {
 	httpOutput := output.NewHttpOutput(jsonFormatter, keyPairFormatter)
 	versionService := service.NewVersionService(version.Version, version.OS, version.Arch)
 	workspaceRepository := repository.NewWorkspaceRepository()
-	workspaceService := service.NewWorkspaceService(workspaceRepository)
+	environmentRepository := repository.NewEnvironmentRepository()
+	environmentService := service.NewEnvironmentService(environmentRepository, workspaceRepository)
+	workspaceService := service.NewWorkspaceService(workspaceRepository, environmentRepository)
 
 	requestRepository := repository.NewRequestRepository()
 	collectionRepository := repository.NewCollectionRepository()
@@ -36,11 +38,11 @@ func cli_app(workspace *domain.Workspace) *cli.Command {
 	collectionService := service.NewCollectionService(collectionRepository, workspaceRepository)
 
 	httpCommands := []*cli.Command{
-		command.HttpCommand(strings.ToLower(http.MethodGet), httpService, httpOutput),
-		command.HttpCommand(strings.ToLower(http.MethodPost), httpService, httpOutput),
-		command.HttpCommand(strings.ToLower(http.MethodPut), httpService, httpOutput),
-		command.HttpCommand(strings.ToLower(http.MethodDelete), httpService, httpOutput),
-		command.HttpCommand(strings.ToLower(http.MethodPatch), httpService, httpOutput),
+		command.HttpCommand(strings.ToLower(http.MethodGet), httpService, environmentService, httpOutput),
+		command.HttpCommand(strings.ToLower(http.MethodPost), httpService, environmentService, httpOutput),
+		command.HttpCommand(strings.ToLower(http.MethodPut), httpService, environmentService, httpOutput),
+		command.HttpCommand(strings.ToLower(http.MethodDelete), httpService, environmentService, httpOutput),
+		command.HttpCommand(strings.ToLower(http.MethodPatch), httpService, environmentService, httpOutput),
 	}
 	utilityCommands := []*cli.Command{
 		command.VersionCommand(versionService),
@@ -51,24 +53,30 @@ func cli_app(workspace *domain.Workspace) *cli.Command {
 	}
 
 	collectionCommands := []*cli.Command{
-		command.RunCommand(requestService, httpOutput),
+		command.RunCommand(requestService, environmentService, httpOutput),
 		command.CollectionInitCommand(collectionService),
 		command.RequestNewCommand(requestService),
+	}
+
+	environmentCommands := []*cli.Command{
+		command.EnvCommand(environmentService),
 	}
 
 	groups := []command.CommandGroup{
 		{Name: "HTTP Commands", Commands: httpCommands},
 		{Name: "Workspace", Commands: workspaceCommands},
 		{Name: "Collections", Commands: collectionCommands},
+		{Name: "Environments", Commands: environmentCommands},
 		{Name: "Common", Commands: utilityCommands},
 	}
 
 	helpCmd := command.HelpCommand(groups)
 	utilityCommands = append(utilityCommands, helpCmd)
-	groups[3].Commands = utilityCommands
+	groups[4].Commands = utilityCommands
 
 	commands := append(httpCommands, workspaceCommands...)
 	commands = append(commands, collectionCommands...)
+	commands = append(commands, environmentCommands...)
 	commands = append(commands, utilityCommands...)
 	return &cli.Command{
 		Name:            "gon",
@@ -120,8 +128,21 @@ func repl() {
 	prompt := utility.ColorInfo("gon> ")
 	historyFile := "/tmp/gon.history"
 
+	environmentRepository := repository.NewEnvironmentRepository()
+	buildPrompt := func() string {
+		if workspace == nil {
+			return utility.ColorInfo("gon> ")
+		}
+		active, _ := environmentRepository.ReadActive(context.Background(), cwd)
+		label := workspace.Name
+		if active != "" {
+			label = workspace.Name + ":" + active
+		}
+		return utility.ColorInfo("gon(" + label + ")> ")
+	}
+
 	if workspace != nil {
-		prompt = utility.ColorInfo("gon(" + workspace.Name + ")> ")
+		prompt = buildPrompt()
 		cacheDirectory := filepath.Join(cwd, ".cache")
 		os.Mkdir(cacheDirectory, 0755)
 		historyFile = filepath.Join(cacheDirectory, workspace.Name+".history")
@@ -173,6 +194,7 @@ func repl() {
 			fmt.Println(err)
 		}
 		fmt.Println()
+		rl.SetPrompt(buildPrompt())
 	}
 }
 

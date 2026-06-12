@@ -8,6 +8,7 @@ import (
 	"gon/internal/core/port/driven"
 	"gon/internal/core/port/driving"
 	"net/textproto"
+	"os"
 	"strings"
 	"time"
 
@@ -58,7 +59,7 @@ func resolveMode(cmd *cli.Command) enums.DisplayMode {
 	return mode
 }
 
-func HttpCommand(method string, httpService driving.HttpService, httpOutput driven.HttpOutput) *cli.Command {
+func HttpCommand(method string, httpService driving.HttpService, environmentService driving.EnvironmentService, httpOutput driven.HttpOutput) *cli.Command {
 	return &cli.Command{
 		Name:      method,
 		Usage:     "Send an HTTP " + strings.ToUpper(method) + " request",
@@ -99,9 +100,18 @@ func HttpCommand(method string, httpService driving.HttpService, httpOutput driv
 				}
 			}
 
+			cwd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			env, err := environmentService.Resolve(ctx, cwd, cmd.String("env"))
+			if err != nil {
+				return err
+			}
+
 			mode := resolveMode(cmd)
 
-			result, err := httpService.Execute(ctx, input)
+			result, err := httpService.Execute(ctx, input, env)
 			if err != nil {
 				return err
 			}
@@ -109,6 +119,10 @@ func HttpCommand(method string, httpService driving.HttpService, httpOutput driv
 			return nil
 		},
 		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "env",
+				Usage: "Environment to use for this request (overrides the active one)",
+			},
 			&cli.StringFlag{
 				Name:  "json",
 				Value: "",

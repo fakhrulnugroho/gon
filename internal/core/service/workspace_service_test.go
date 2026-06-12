@@ -15,14 +15,16 @@ import (
 // driven.WorkspaceRepository. It records the arguments passed to Save and
 // returns a configurable error.
 type mockWorkspaceRepository struct {
-	saveErr        error
-	savedDir       string
-	saved          domain.Workspace
-	saveCalls      int
-	loadErr        error
-	loadResponse   *domain.Workspace
-	existsResponse bool
-	existsErr      error
+	saveErr          error
+	savedDir         string
+	saved            domain.Workspace
+	saveCalls        int
+	loadErr          error
+	loadResponse     *domain.Workspace
+	existsResponse   bool
+	existsErr        error
+	gitignoreEntries []string
+	gitignoreErr     error
 }
 
 func (m *mockWorkspaceRepository) Save(_ context.Context, directory string, workspace domain.Workspace) error {
@@ -40,9 +42,15 @@ func (m *mockWorkspaceRepository) Exists(_ context.Context, _ string) (bool, err
 	return m.existsResponse, m.existsErr
 }
 
+func (m *mockWorkspaceRepository) EnsureGitignore(_ context.Context, _ string, entries []string) error {
+	m.gitignoreEntries = entries
+	return m.gitignoreErr
+}
+
 func TestWorkspaceServiceCreate(t *testing.T) {
 	repo := &mockWorkspaceRepository{}
-	svc := NewWorkspaceService(repo)
+	envRepo := newFakeEnvRepo()
+	svc := NewWorkspaceService(repo, envRepo)
 
 	err := svc.Create(context.Background(), "/home/user/My Project")
 	require.NoError(t, err)
@@ -50,14 +58,23 @@ func TestWorkspaceServiceCreate(t *testing.T) {
 	assert.Equal(t, 1, repo.saveCalls)
 	assert.Equal(t, "/home/user/My Project", repo.savedDir)
 	assert.Equal(t, "my-project", repo.saved.Name)
-	assert.Equal(t, "https://api.example.com", repo.saved.BaseURL)
+	// base_url is no longer written to the workspace; it lives in the environment.
+	assert.Equal(t, "", repo.saved.BaseURL)
 	assert.Equal(t, domain.Config{}, repo.saved.Config)
+
+	// a 'local' environment is scaffolded and marked active.
+	local, ok := envRepo.envs["local"]
+	require.True(t, ok)
+	assert.Equal(t, "https://api.example.com", local.BaseURL)
+	assert.Equal(t, "local", envRepo.active)
+
+	assert.Equal(t, []string{".gon/", ".cache/"}, repo.gitignoreEntries)
 }
 
 func TestWorkspaceServiceCreatePropagatesError(t *testing.T) {
 	sentinel := errors.New("disk full")
 	repo := &mockWorkspaceRepository{saveErr: sentinel}
-	svc := NewWorkspaceService(repo)
+	svc := NewWorkspaceService(repo, newFakeEnvRepo())
 
 	err := svc.Create(context.Background(), "/tmp/proj")
 	require.Error(t, err)
