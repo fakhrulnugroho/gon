@@ -20,9 +20,9 @@ func writeFile(t *testing.T, path, content string) {
 
 func TestRequestRepositoryLoad(t *testing.T) {
 	root := t.TempDir()
-	writeFile(t, filepath.Join(root, ".gon", "auth", "collection.yml"), "name: Auth\nconfig:\n  path: /auth\n")
-	writeFile(t, filepath.Join(root, ".gon", "auth", "admin", "collection.yml"), "name: Admin\nconfig:\n  path: /admin\n")
-	writeFile(t, filepath.Join(root, ".gon", "auth", "admin", "impersonate.yml"), "method: post\nurl: /impersonate\n")
+	writeFile(t, filepath.Join(root, "auth", "collection.yml"), "name: Auth\nconfig:\n  path: /auth\n")
+	writeFile(t, filepath.Join(root, "auth", "admin", "collection.yml"), "name: Admin\nconfig:\n  path: /admin\n")
+	writeFile(t, filepath.Join(root, "auth", "admin", "impersonate.yml"), "method: post\nurl: /impersonate\n")
 
 	repo := NewRequestRepository()
 	req, collections, err := repo.Load(context.Background(), root, "auth/admin/impersonate")
@@ -44,7 +44,7 @@ func TestRequestRepositoryLoadMissing(t *testing.T) {
 
 func TestRequestRepositoryLoadRejectsCollectionFile(t *testing.T) {
 	root := t.TempDir()
-	writeFile(t, filepath.Join(root, ".gon", "auth", "collection.yml"), "name: Auth\n")
+	writeFile(t, filepath.Join(root, "auth", "collection.yml"), "name: Auth\n")
 	repo := NewRequestRepository()
 	_, _, err := repo.Load(context.Background(), root, "auth/collection")
 	require.Error(t, err)
@@ -66,13 +66,13 @@ func TestRequestRepositorySaveAndExists(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, exists)
 
-	_, err = os.Stat(filepath.Join(root, ".gon", "auth", "login.yml"))
+	_, err = os.Stat(filepath.Join(root, "auth", "login.yml"))
 	require.NoError(t, err)
 }
 
 func TestRequestRepositoryLoadYamlExtension(t *testing.T) {
 	root := t.TempDir()
-	writeFile(t, filepath.Join(root, ".gon", "ping.yaml"), "method: get\nurl: /ping\n")
+	writeFile(t, filepath.Join(root, "ping.yaml"), "method: get\nurl: /ping\n")
 	repo := NewRequestRepository()
 	req, _, err := repo.Load(context.Background(), root, "ping")
 	require.NoError(t, err)

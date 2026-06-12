@@ -31,7 +31,7 @@ func TestWorkspaceRepositorySave(t *testing.T) {
 	err := repo.Save(context.Background(), dir, sampleWorkspace())
 	require.NoError(t, err)
 
-	path := filepath.Join(dir, ".gon", "workspace.yaml")
+	path := filepath.Join(dir, "workspace.yml")
 	require.FileExists(t, path)
 
 	data, err := os.ReadFile(path)
@@ -65,9 +65,7 @@ func TestWorkspaceRepositoryLoadMissingFile(t *testing.T) {
 
 func TestWorkspaceRepositoryLoadCorruptedYAML(t *testing.T) {
 	dir := t.TempDir()
-	gonDir := filepath.Join(dir, ".gon")
-	require.NoError(t, os.MkdirAll(gonDir, 0755))
-	require.NoError(t, os.WriteFile(filepath.Join(gonDir, "workspace.yaml"), []byte("::: not valid yaml :::"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "workspace.yml"), []byte("::: not valid yaml :::"), 0644))
 
 	repo := NewWorkspaceRepository()
 	loaded, err := repo.Load(context.Background(), dir)

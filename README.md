@@ -99,14 +99,14 @@ delete <url> [options]    Send an HTTP DELETE request
 ### Workspace Commands
 
 ```
-init    Create a .gon/workspace.yaml in the current directory
+init    Create a workspace.yml in the current directory
 ```
 
 ### Collection Commands
 
 These commands require an initialized workspace (`init`) — collections and
-requests are stored under the workspace's `.gon/` directory. Without one they
-exit with `no gon workspace found, run 'init' first`.
+requests are stored at the workspace root, alongside `workspace.yml`. Without one
+they exit with `no gon workspace found, run 'init' first`.
 
 ```
 run        <path> [options]    Run a saved request by path (e.g. run auth/login)
@@ -230,11 +230,13 @@ gon post https://api.example.com/login --json '{"username":"admin","password":"s
 
 ## Workspaces
 
-Run `gon init` in a project directory to create a `.gon/workspace.yaml`.
-A workspace gives every request a base URL plus defaults that are applied
-automatically — so you don't repeat the same host, auth header, or query string on
-every call. It also anchors `.gon/` as the home for your collections and saved
-requests, so `collection init`, `request new`, and `run` all require it.
+Run `gon init` in a directory to create a `workspace.yml`. A workspace gives every
+request a base URL plus defaults that are applied automatically — so you don't
+repeat the same host, auth header, or query string on every call. The directory
+itself becomes the home for your collections and saved requests, so
+`collection init`, `request new`, and `run` all require it. Because everything is
+plain files at the workspace root, the whole folder is a self-contained, shareable
+artifact — hand it to a frontend teammate or commit it as its own repo.
 
 ```yaml
 name: my-project
@@ -261,16 +263,16 @@ is sent to `https://api.example.com/v1/users` with the `Authorization` header an
 - **Defaults are overridable** — a per-request `--header` or `--query` for the same
   key wins over the workspace default; the default is dropped, not duplicated.
 - When you're inside a workspace the REPL prompt shows its name, e.g.
-  `gon(my-project)>`, and command history is kept per-workspace under `.gon/cache/`.
+  `gon(my-project)>`, and command history is kept per-workspace under `.cache/`.
 
 ---
 
 ## Collections & Saved Requests
 
 Save requests to YAML files so you can run them by name instead of retyping the
-URL, headers, and body each time. Everything lives under the workspace's `.gon/`
-directory, so run `gon init` first. Requests are plain files; a folder becomes a
-**collection** when it holds a `collection.yml` that defines shared defaults.
+URL, headers, and body each time. Everything lives at the workspace root, so run
+`gon init` first. Requests are plain files; a folder becomes a **collection** when
+it holds a `collection.yml` that defines shared defaults.
 
 ### Scaffold a request
 
@@ -278,12 +280,12 @@ directory, so run `gon init` first. Requests are plain files; a folder becomes a
 gon> request new auth/login --method POST
 ```
 
-This creates `.gon/auth/login.yml` and, if needed, a `collection.yml` for every
-folder along the path (`.gon/auth/` here). Edit the generated file to fill in the
+This creates `auth/login.yml` and, if needed, a `collection.yml` for every
+folder along the path (`auth/` here). Edit the generated file to fill in the
 URL, headers, query, and body:
 
 ```yaml
-# .gon/auth/login.yml
+# auth/login.yml
 name: login
 method: POST
 url: /login
@@ -306,11 +308,11 @@ A request body can be one of `json`, `raw` (with an optional `contentType`), or
 gon> collection init auth/admin
 ```
 
-Creates the nested folders under `.gon/` and a `collection.yml` in each. A
+Creates the nested folders and a `collection.yml` in each. A
 `collection.yml` holds defaults applied to every request beneath it:
 
 ```yaml
-# .gon/auth/collection.yml
+# auth/collection.yml
 name: auth
 config:
   path: /auth

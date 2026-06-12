@@ -122,7 +122,7 @@ func repl() {
 
 	if workspace != nil {
 		prompt = utility.ColorInfo("gon(" + workspace.Name + ")> ")
-		cacheDirectory := filepath.Join(cwd, ".gon", "cache")
+		cacheDirectory := filepath.Join(cwd, ".cache")
 		os.Mkdir(cacheDirectory, 0755)
 		historyFile = filepath.Join(cacheDirectory, workspace.Name+".history")
 	}

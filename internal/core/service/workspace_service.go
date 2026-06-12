@@ -29,9 +29,9 @@ func (s *workspaceService) Create(ctx context.Context, directory string) error {
 }
 
 // ensureWorkspace guards collection/request operations: they only make sense
-// inside an initialized workspace, since every artifact lives under .gon. When
-// no workspace is present it returns an actionable error pointing at
-// 'workspace init'.
+// inside an initialized workspace, i.e. a directory with a workspace.yml at its
+// root. When no workspace is present it returns an actionable error pointing at
+// 'init'.
 func ensureWorkspace(ctx context.Context, repo driven.WorkspaceRepository, root string) error {
 	exists, err := repo.Exists(ctx, root)
 	if err != nil {

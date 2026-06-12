@@ -13,11 +13,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// gonDir is the per-project directory that holds the workspace, collections,
-// requests, and cache. Every gon artifact lives under it.
-const gonDir = ".gon"
-
-const workspaceFileName = "workspace.yaml"
+// workspaceFileName is the manifest that marks a directory as a gon workspace.
+// It lives at the workspace root, alongside collections and requests, so the
+// whole folder is a self-contained, shareable artifact.
+const workspaceFileName = "workspace.yml"
 
 type workspaceRepository struct {
 }
@@ -31,19 +30,17 @@ func (r *workspaceRepository) Save(ctx context.Context, directory string, worksp
 	if err != nil {
 		return err
 	}
-	gonDirectory := filepath.Join(directory, gonDir)
-	if err := os.MkdirAll(gonDirectory, 0755); err != nil {
+	if err := os.MkdirAll(directory, 0755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(gonDirectory, workspaceFileName), data, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(directory, workspaceFileName), data, 0644); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r *workspaceRepository) Load(ctx context.Context, directory string) (*domain.Workspace, error) {
-	gonDirectory := filepath.Join(directory, gonDir)
-	data, err := os.ReadFile(filepath.Join(gonDirectory, workspaceFileName))
+	data, err := os.ReadFile(filepath.Join(directory, workspaceFileName))
 	if err != nil {
 		return nil, err
 	}
@@ -55,9 +52,9 @@ func (r *workspaceRepository) Load(ctx context.Context, directory string) (*doma
 }
 
 // Exists reports whether a workspace has been initialized for directory, i.e.
-// whether directory/.gon/workspace.yaml is present.
+// whether directory/workspace.yml is present.
 func (r *workspaceRepository) Exists(ctx context.Context, directory string) (bool, error) {
-	if _, err := os.Stat(filepath.Join(directory, gonDir, workspaceFileName)); err != nil {
+	if _, err := os.Stat(filepath.Join(directory, workspaceFileName)); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return false, nil
 		}
